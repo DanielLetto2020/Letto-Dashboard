@@ -27,15 +27,14 @@ def get_git_info():
         return {"branch": "unknown", "commits": []}
 
 def get_ai_context():
-    # В реальных условиях мы бы вызывали внутренний API OpenClaw.
-    # Так как я не могу вызвать инструмент напрямую из скрипта Python, 
-    # я буду использовать временный файл-заглушку, который буду обновлять сам.
-    # Но для демонстрации я распаршу данные из моего последнего вызова session_status.
     try:
-        if os.path.exists(os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json')):
-            with open(os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json'), 'r') as f:
+        # Уточняем путь после переезда в api/
+        path = os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json')
+        if os.path.exists(path):
+            with open(path, 'r') as f:
                 return json.load(f)
-    except: pass
+    except Exception as e:
+        print(f"AI Context read error: {e}")
     return {"used": 0, "total": 1000000, "percent": 0}
 
 def get_agents_info():
