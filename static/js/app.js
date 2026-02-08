@@ -19,15 +19,9 @@ async function updateStats() {
     document.getElementById('stat-ram').innerText = Math.round(data.ram) + '%';
     document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
     document.getElementById('stat-uptime').innerText = data.uptime;
-    
-    // HB Time
     const hbS = Math.floor(Date.now()/1000) - data.heartbeat_last;
     document.getElementById('hb-last-seen').innerText = hbS < 60 ? 'Now' : Math.floor(hbS/60) + 'm ago';
-
-    // Files
     if (data.files) document.getElementById('files-tree').innerHTML = renderTree(data.files);
-
-    // Agents
     const agentsList = document.getElementById('agents-list');
     document.getElementById('stat-agents-count').innerText = data.agents.length;
     agentsList.innerHTML = '';
@@ -37,8 +31,6 @@ async function updateStats() {
         row.innerHTML = `<span>${a.name}</span><span class="text-[7px] text-slate-600 font-mono italic">PID:${a.pid}</span>`;
         agentsList.appendChild(row);
     });
-
-    // Commits
     const cl = document.getElementById('commits-list');
     cl.innerHTML = '';
     data.commits.forEach(c => {
@@ -47,7 +39,6 @@ async function updateStats() {
         row.innerHTML = `<span class="text-[9px] text-slate-200 truncate">${c.msg}</span><span class="text-[7px] text-slate-600 font-bold tracking-tighter uppercase">${c.date}</span>`;
         cl.appendChild(row);
     });
-
     if (document.activeElement !== document.getElementById('heartbeat-editor')) {
         document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
     }
@@ -67,7 +58,7 @@ function renderTree(nodes, indent = 0) {
                 <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1) : ''}</div>
             </div>`;
         } else {
-            html += `<div class="py-1 flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${pad}px" onclick="openFile('${node.path}')">
+            html += `<div class="py-1 flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${pad}px" onclick="openFile('${node.path.replace(/'/g, "\\'")}')">
                 <span class="mr-2 ml-4">📄</span><span class="text-slate-300">${node.name}</span>
             </div>`;
         }
@@ -95,15 +86,19 @@ async function openFile(path, page = 1) {
     
     const codeEl = document.getElementById('viewer-text');
     codeEl.innerText = 'Loading...';
-    codeEl.className = ''; 
+    codeEl.className = 'hljs'; 
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     if (data.error) { codeEl.innerText = data.error; return; }
 
     codeEl.innerText = data.content;
-    if (window.hljs) {
-        hljs.highlightElement(codeEl);
-    }
+    
+    // Принудительно вызываем подсвечивание через таймаут для стабильности DOM
+    setTimeout(() => {
+        if (window.hljs) {
+            hljs.highlightElement(codeEl);
+        }
+    }, 0);
 
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {

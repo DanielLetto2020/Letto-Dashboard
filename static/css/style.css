@@ -8,20 +8,24 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
 
-/* Чистые стили для Highlight.js */
+/* ФИНАЛЬНАЯ ПОПЫТКА СКОРРЕКТИРОВАТЬ HIGHLIGHT.JS */
 #viewer-text {
-    display: block;
-    white-space: pre !important;
+    display: block !important;
+    white-space: pre !important; 
     word-wrap: normal !important;
-    overflow-x: visible !important;
+    overflow-wrap: normal !important;
     font-size: 10px;
     line-height: 1.5;
+    text-align: left;
 }
 pre {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    white-space: pre !important;
 }
 .hljs {
     background: transparent !important;
     padding: 0 !important;
+    white-space: pre !important;
 }
