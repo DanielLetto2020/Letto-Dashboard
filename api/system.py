@@ -2,10 +2,14 @@ import os
 import psutil
 import time
 import subprocess
+import json
 
-WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DASHBOARD_ROOT = os.path.dirname(os.path.abspath(__file__))
+# Константы путей
+API_DIR = os.path.dirname(os.path.abspath(__file__))
+DASHBOARD_ROOT = os.path.dirname(API_DIR)
+WORKSPACE_ROOT = os.path.dirname(DASHBOARD_ROOT)
 HB_MARKER = os.path.join(WORKSPACE_ROOT, '.heartbeat_last_run')
+AI_CONTEXT_FILE = os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json')
 
 def get_server_uptime():
     lib_boot_time = psutil.boot_time()
@@ -19,8 +23,8 @@ def get_last_hb():
 
 def get_git_info():
     try:
-        branch = subprocess.check_output("git -C " + DASHBOARD_ROOT + " rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
-        output = subprocess.check_output("git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
+        branch = subprocess.check_output(f"git -C {DASHBOARD_ROOT} rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
+        output = subprocess.check_output(f"git -C {DASHBOARD_ROOT} log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
         commits = [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
         return {"branch": branch, "commits": commits}
     except: 
@@ -28,10 +32,8 @@ def get_git_info():
 
 def get_ai_context():
     try:
-        # Уточняем путь после переезда в api/
-        path = os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json')
-        if os.path.exists(path):
-            with open(path, 'r') as f:
+        if os.path.exists(AI_CONTEXT_FILE):
+            with open(AI_CONTEXT_FILE, 'r') as f:
                 return json.load(f)
     except Exception as e:
         print(f"AI Context read error: {e}")
