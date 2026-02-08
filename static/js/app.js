@@ -86,19 +86,11 @@ async function openFile(path, page = 1) {
     
     const codeEl = document.getElementById('viewer-text');
     codeEl.innerText = 'Loading...';
-    codeEl.className = 'hljs'; 
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     if (data.error) { codeEl.innerText = data.error; return; }
 
     codeEl.innerText = data.content;
-    
-    // Принудительно вызываем подсвечивание через таймаут для стабильности DOM
-    setTimeout(() => {
-        if (window.hljs) {
-            hljs.highlightElement(codeEl);
-        }
-    }, 0);
 
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {

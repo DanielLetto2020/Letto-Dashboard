@@ -8,24 +8,19 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
 
-/* ФИНАЛЬНАЯ ПОПЫТКА СКОРРЕКТИРОВАТЬ HIGHLIGHT.JS */
+/* Полный сброс стилей подсветки, возврат к простому тексту */
 #viewer-text {
-    display: block !important;
-    white-space: pre !important; 
-    word-wrap: normal !important;
-    overflow-wrap: normal !important;
+    display: block;
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
     font-size: 10px;
     line-height: 1.5;
     text-align: left;
+    color: #cbd5e1; /* slate-300 */
 }
 pre {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-    white-space: pre !important;
-}
-.hljs {
-    background: transparent !important;
-    padding: 0 !important;
-    white-space: pre !important;
+    margin: 0;
+    padding: 0;
+    background: transparent;
 }

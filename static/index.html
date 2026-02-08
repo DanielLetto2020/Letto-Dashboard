@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
-    <!-- Highlight.js Theme -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
 </head>
 <body class="min-h-screen">
     <div id="desktop-view" class="h-screen flex flex-col items-center justify-center p-10 text-center text-slate-600">
@@ -44,23 +42,20 @@
             </header>
 
             <div id="main-dashboard-content">
-                <!-- Stats Row -->
                 <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2 text-center">
                     <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
                     <div class="border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
                     <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
                 </div>
 
-                <!-- Git -->
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden text-left">
                     <div class="bg-white/5 px-4 py-2"><span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span></div>
                     <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto"></div>
                 </div>
 
-                <!-- Heartbeat -->
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Heartbeat Tasks</span>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Heartbeat Tasks</span>
                         <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold">Never</div>
                     </div>
                     <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false"></textarea>
@@ -69,7 +64,6 @@
                     </div>
                 </div>
 
-                <!-- Explorer -->
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
@@ -81,7 +75,6 @@
                     <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed"></div>
                 </div>
 
-                <!-- Agents -->
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Active Agents</span>
@@ -101,8 +94,8 @@
                     <button onclick="closeFileViewer()" class="text-[10px] bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold uppercase tracking-widest">← Back</button>
                     <div id="viewer-filename" class="text-[10px] text-emerald-400 font-bold font-mono truncate max-w-[60%]">file.py</div>
                 </div>
-                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto font-mono text-[10px] min-h-0">
-                    <pre class="m-0 p-0 bg-transparent"><code id="viewer-text" class="text-slate-300"></code></pre>
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto min-h-0">
+                    <pre class="m-0 p-0 text-slate-300 text-[10px] font-mono whitespace-pre text-left" id="viewer-text"></pre>
                 </div>
                 <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
                     <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1">Prev</button>
@@ -118,7 +111,5 @@
     </div>
 
     <script src="/static/js/app.js"></script>
-    <!-- Highlight.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </body>
 </html>
