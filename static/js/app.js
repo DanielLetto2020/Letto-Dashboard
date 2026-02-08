@@ -2,6 +2,9 @@ const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
 let autoRefreshEnabled = false;
+let originalContent = '';
+let translatedContent = '';
+let isTranslated = false;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -14,6 +17,7 @@ async function api(path, method = 'GET', body = null) {
 }
 
 async function updateStats() {
+    // Если автообновление выключено и это вызов по таймеру (без аргументов) — выходим
     if (!autoRefreshEnabled && arguments.length === 0) return;
     
     const data = await api('/api/status');
@@ -89,11 +93,23 @@ async function openFile(path, page = 1) {
     
     const codeEl = document.getElementById('viewer-text');
     codeEl.innerText = 'Loading...';
+    
+    const translateBtn = document.getElementById('translate-btn');
+    translateBtn.classList.add('hidden');
+    isTranslated = false;
+    translateBtn.innerText = 'Translate';
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     if (data.error) { codeEl.innerText = data.error; return; }
 
-    codeEl.innerText = data.content;
+    originalContent = data.content;
+    translatedContent = '';
+    codeEl.innerText = originalContent;
+
+    const ext = path.split('.').pop().toLowerCase();
+    if (ext === 'md' || ext === 'txt') {
+        translateBtn.classList.remove('hidden');
+    }
 
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {
@@ -111,6 +127,32 @@ function closeFileViewer() {
     document.getElementById('main-dashboard-content').classList.remove('hidden');
 }
 
+async function toggleTranslation() {
+    const btn = document.getElementById('translate-btn');
+    const codeEl = document.getElementById('viewer-text');
+    
+    if (isTranslated) {
+        codeEl.innerText = originalContent;
+        btn.innerText = 'Translate';
+        isTranslated = false;
+    } else {
+        if (!translatedContent) {
+            btn.innerText = '...';
+            const res = await api('/api/translate', 'POST', { text: originalContent });
+            if (res.translated) {
+                translatedContent = res.translated;
+            } else {
+                alert('Translation failed');
+                btn.innerText = 'Translate';
+                return;
+            }
+        }
+        codeEl.innerText = translatedContent;
+        btn.innerText = 'Original';
+        isTranslated = true;
+    }
+}
+
 async function saveHeartbeat() {
     const res = await api('/api/heartbeat/update', 'POST', { content: document.getElementById('heartbeat-editor').value });
     if (res.success) {
@@ -123,22 +165,24 @@ async function saveHeartbeat() {
 function updateTimer() {
     const timerEl = document.getElementById('sync-timer');
     if(!timerEl) return;
+    
     if (!autoRefreshEnabled) {
         timerEl.parentElement.style.opacity = '0.3';
         return;
     }
     timerEl.parentElement.style.opacity = '1';
+    
     const rem = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
     const seconds = Math.floor(rem / 1000);
     const ms = rem % 1000;
-    timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3,'0')}</span>`;
+    timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3, '0')}</span>`;
 }
 
 function toggleAutoRefresh(enabled) {
     autoRefreshEnabled = enabled;
     if (enabled) {
         lastUpdate = Date.now();
-        updateStats();
+        updateStats(); // Вызываем немедленное обновление при включении
     }
 }
 

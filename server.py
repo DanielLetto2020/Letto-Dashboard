@@ -5,11 +5,12 @@ from pydantic import BaseModel
 import os
 import psutil
 
-# Импортируем нашу модульную логику
+# Импортируем нашу новую модульную логику
 from api.auth import verify_token
 from api.system import get_server_uptime, get_last_hb, get_git_commits, get_agents_info
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, read_file_content
+from api.translate import translate_text
 
 app = FastAPI()
 
@@ -23,6 +24,10 @@ class AuthRequest(BaseModel):
 class HeartbeatUpdate(BaseModel):
     token: str
     content: str
+
+class TranslateRequest(BaseModel):
+    token: str
+    text: str
 
 @app.post("/api/auth")
 async def auth(data: AuthRequest):
@@ -55,8 +60,14 @@ async def get_file(path: str, page: int = 1, token: str = None):
     if not verify_token(token): raise HTTPException(status_code=401)
     return read_file_content(path, page)
 
+@app.post("/api/translate")
+async def translate(data: TranslateRequest):
+    if not verify_token(data.token): raise HTTPException(status_code=401)
+    return {"translated": translate_text(data.text)}
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
+    # Отдаем главный HTML из файла
     return FileResponse(os.path.join(current_dir, "static/index.html"))
 
 if __name__ == "__main__":
