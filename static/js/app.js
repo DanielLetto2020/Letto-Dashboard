@@ -1,6 +1,8 @@
 const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
+let currentFilePath = '';
+let currentFilePage = 1;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -46,30 +48,103 @@ async function updateStats() {
         document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
     }
 
-    // Update File Tree
-    const treeEl = document.getElementById('files-tree');
-    if (treeEl && data.files) {
+    if (data.files) {
+        const treeEl = document.getElementById('files-tree');
         treeEl.innerHTML = renderTree(data.files);
     }
 
     lastUpdate = Date.now();
-    console.log("Stats updated at " + new Date().toLocaleTimeString());
 }
 
 function renderTree(nodes, indent = 0) {
     let html = '';
     nodes.forEach(node => {
-        const icon = node.is_dir ? '📁' : '📄';
-        const padding = indent * 12;
-        html += `<div class="py-1 flex items-center" style="padding-left: ${padding}px">
-            <span class="mr-1.5 opacity-70">${icon}</span>
-            <span class="${node.is_dir ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${node.name}</span>
-        </div>`;
-        if (node.is_dir && node.children) {
-            html += renderTree(node.children, indent + 1);
+        const padding = indent * 16;
+        if (node.is_dir) {
+            html += `<div class="dir-item py-1.5" style="padding-left: ${padding}px">
+                <div class="flex items-center active:bg-white/5 rounded px-1" onclick="toggleDir(this)">
+                    <span class="mr-2 text-[8px] transform transition-transform folder-arrow">▶</span>
+                    <span class="mr-2">📁</span>
+                    <span class="text-emerald-400 font-bold uppercase tracking-tight">${node.name}</span>
+                </div>
+                <div class="dir-children hidden">
+                    ${node.children ? renderTree(node.children, indent + 1) : ''}
+                </div>
+            </div>`;
+        } else {
+            html += `<div class="file-item py-1.5 flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${padding}px" onclick="openFile('${node.path}')">
+                <span class="mr-2 ml-4">📄</span>
+                <span class="text-slate-300">${node.name}</span>
+            </div>`;
         }
     });
     return html;
+}
+
+function toggleDir(el) {
+    const parent = el.parentElement;
+    const children = parent.querySelector('.dir-children');
+    const arrow = el.querySelector('.folder-arrow');
+    const isHidden = children.classList.contains('hidden');
+    
+    if (isHidden) {
+        children.classList.remove('hidden');
+        arrow.style.transform = 'rotate(90deg)';
+    } else {
+        children.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+function toggleAllDirs(expand) {
+    document.querySelectorAll('.dir-children').forEach(el => {
+        if (expand) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+    });
+    document.querySelectorAll('.folder-arrow').forEach(el => {
+        el.style.transform = expand ? 'rotate(90deg)' : 'rotate(0deg)';
+    });
+}
+
+async function openFile(path, page = 1) {
+    currentFilePath = path;
+    currentFilePage = page;
+    
+    document.getElementById('main-dashboard-content').classList.add('hidden');
+    document.getElementById('file-viewer-content').classList.remove('hidden');
+    document.getElementById('viewer-filename').innerText = path.split('/').pop();
+    document.getElementById('viewer-text').innerText = 'Loading content...';
+    
+    const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
+    
+    if (data.error) {
+        document.getElementById('viewer-text').innerText = 'Error: ' + data.error;
+        return;
+    }
+    
+    document.getElementById('viewer-text').innerText = data.content;
+    
+    const pager = document.getElementById('viewer-pagination');
+    if (data.total_pages > 1) {
+        pager.classList.remove('hidden');
+        document.getElementById('page-info').innerText = `Page ${data.page} of ${data.total_pages}`;
+        
+        const prev = document.getElementById('page-prev');
+        const next = document.getElementById('page-next');
+        
+        prev.disabled = (data.page <= 1);
+        next.disabled = (data.page >= data.total_pages);
+        
+        prev.onclick = () => openFile(path, data.page - 1);
+        next.onclick = () => openFile(path, data.page + 1);
+    } else {
+        pager.classList.add('hidden');
+    }
+}
+
+function closeFileViewer() {
+    document.getElementById('file-viewer-content').classList.add('hidden');
+    document.getElementById('main-dashboard-content').classList.remove('hidden');
 }
 
 async function saveHeartbeat() {

@@ -14,12 +14,10 @@
     </div>
 
     <div id="mobile-view" class="min-h-screen flex flex-col p-4 max-w-md mx-auto">
-        <!-- Loader -->
         <div id="boot-loader" class="flex-1 flex items-center justify-center">
             <div class="text-emerald-500 animate-pulse text-[10px] tracking-[0.5em]">INITIALIZING...</div>
         </div>
 
-        <!-- Login View -->
         <div id="login-view" class="hidden flex-1 flex flex-col justify-center py-10">
             <div class="text-center mb-12">
                 <span class="text-6xl block mb-4">🌿</span>
@@ -31,7 +29,6 @@
             </div>
         </div>
 
-        <!-- Dashboard View -->
         <div id="dashboard-view" class="hidden flex-1 flex flex-col pt-2">
             <header class="flex justify-between items-center mb-6">
                 <div>
@@ -44,65 +41,81 @@
                 <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 shadow-xl" onclick="updateStats()">🔄</div>
             </header>
 
-            <!-- Stats -->
-            <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2">
-                <div class="text-center">
-                    <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div>
-                    <div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div>
+            <div id="main-dashboard-content">
+                <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2">
+                    <div class="text-center">
+                        <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div>
+                        <div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div>
+                    </div>
+                    <div class="text-center border-x border-white/5">
+                        <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div>
+                        <div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div>
+                        <div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div>
+                    </div>
                 </div>
-                <div class="text-center border-x border-white/5">
-                    <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div>
-                    <div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div>
+
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden">
+                    <div class="bg-white/5 px-4 py-2 text-left">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+                    </div>
+                    <div id="commits-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
                 </div>
-                <div class="text-center">
-                    <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div>
-                    <div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div>
+
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Heartbeat Tasks</span>
+                        <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold uppercase">Never</div>
+                    </div>
+                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false"></textarea>
+                    <div class="px-4 pb-4 flex justify-end">
+                        <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center text-left">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
+                        <div class="flex gap-2">
+                            <button onclick="toggleAllDirs(true)" class="text-[7px] text-emerald-500/60 font-bold">EXPAND</button>
+                            <button onclick="toggleAllDirs(false)" class="text-[7px] text-slate-600 font-bold">COLLAPSE</button>
+                        </div>
+                    </div>
+                    <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed">
+                        <div class="text-slate-600 italic text-center py-4 uppercase tracking-widest">Scanning...</div>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden">
+                    <div class="bg-white/5 px-4 py-2 text-left flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Active Agents</span>
+                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
+                    </div>
+                    <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
+                </div>
+
+                <div class="bg-slate-800/20 p-4 rounded-3xl border border-white/5 mb-4 text-left text-[9px] font-bold">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 uppercase tracking-widest">Server Uptime</span>
+                        <span id="stat-uptime" class="text-white uppercase tracking-widest">--h --m</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Git History -->
-            <div class="stat-card rounded-3xl mb-4 overflow-hidden">
-                <div class="bg-white/5 px-4 py-2 text-left">
-                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+            <div id="file-viewer-content" class="hidden flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="closeFileViewer()" class="text-[10px] bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold uppercase tracking-widest">← Back</button>
+                    <div id="viewer-filename" class="text-[10px] text-emerald-400 font-bold font-mono truncate max-w-[60%]">file.txt</div>
                 </div>
-                <div id="commits-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
-            </div>
-
-            <!-- Heartbeat -->
-            <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                <div class="bg-white/5 px-4 py-2 flex justify-between items-center text-left">
-                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Heartbeat Tasks</span>
-                    <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold uppercase">Never</div>
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto font-mono text-[10px] relative">
+                    <pre id="viewer-text" class="text-slate-300 whitespace-pre-wrap break-all"></pre>
                 </div>
-                <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false"></textarea>
-                <div class="px-4 pb-4 flex justify-end">
-                    <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
-                </div>
-            </div>
-
-            <!-- Workspace Explorer -->
-            <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                <div class="bg-white/5 px-4 py-2 flex justify-between items-center text-left">
-                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
-                </div>
-                <div id="files-tree" class="px-4 py-2 text-left max-h-64 overflow-y-auto text-[10px] font-mono leading-relaxed">
-                    <div class="text-slate-600 italic">Exploring structure...</div>
-                </div>
-            </div>
-
-            <!-- Agents -->
-            <div class="stat-card rounded-3xl mb-4 overflow-hidden">
-                <div class="bg-white/5 px-4 py-2 text-left flex justify-between items-center">
-                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Active Agents</span>
-                    <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
-                </div>
-                <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
-            </div>
-
-            <div class="bg-slate-800/20 p-4 rounded-3xl border border-white/5 mb-4 text-left text-[9px] font-bold">
-                <div class="flex justify-between items-center">
-                    <span class="text-slate-500 uppercase tracking-widest">Server Uptime</span>
-                    <span id="stat-uptime" class="text-white uppercase tracking-widest">--h --m</span>
+                <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
+                    <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1 disabled:opacity-30">Prev</button>
+                    <span id="page-info" class="text-[9px] text-slate-500">Page 1 of 1</span>
+                    <button id="page-next" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1 disabled:opacity-30">Next</button>
                 </div>
             </div>
 
@@ -112,7 +125,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="/static/js/app.js"></script>
 </body>
 </html>
