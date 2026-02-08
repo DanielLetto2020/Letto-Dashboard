@@ -1,6 +1,6 @@
 import os
 
-WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HEARTBEAT_FILE = os.path.join(WORKSPACE_ROOT, 'HEARTBEAT.md')
 
 def get_heartbeat_raw():
