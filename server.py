@@ -50,17 +50,36 @@ def get_git_commits():
 def get_agents_info():
     agents = []
     try:
+        # Ищем процессы: 
+        # 1. Главный процесс (Node.js)
+        # 2. Дашборд (Python server.py)
+        # 3. Любые другие активные sub-agents/openclaw
         cmd = "ps -eo pid,cmd | grep -E 'openclaw|node.*index.mjs|python3.*server.py' | grep -v grep"
         output = subprocess.check_output(cmd, shell=True).decode().splitlines()
+        
         for line in output:
             line = line.strip()
             if not line: continue
-            pid = line.split()[0]
-            cmd_full = " ".join(line.split()[1:])
-            name = "Letto UI Manager" if "server.py" in cmd_full else ("Letto Core Gateway" if "gateway" in cmd_f else "Main Session")
+            parts = line.split()
+            pid = parts[0]
+            cmd_full = " ".join(parts[1:])
+            
+            name = "Unknown Agent"
+            if "server.py" in cmd_full:
+                name = "Letto UI Manager"
+            elif "openclaw" in cmd_full and "gateway" in cmd_full:
+                name = "Letto Core Gateway"
+            elif "node" in cmd_full and "index.mjs" in cmd_full:
+                name = "Main Session"
+            else:
+                name = "Active Process"
+            
             agents.append({"pid": pid, "name": name})
-    except: pass
-    if not agents: agents.append({"pid": "-", "name": "Letto Core"})
+    except Exception as e:
+        print(f"Error getting agents: {e}")
+    
+    if not agents:
+        agents.append({"pid": str(os.getpid()), "name": "Letto UI Manager (Self)"})
     return agents
 
 def verify_token_internal(token: str):
