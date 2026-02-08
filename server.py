@@ -10,9 +10,9 @@ import subprocess
 
 app = FastAPI()
 WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Путь к конфигу OpenClaw (на уровень выше воркспейса или в корне юзера)
+DASHBOARD_ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".openclaw/openclaw.json")
-TOKEN_FILE = os.path.join(os.path.dirname(__file__), 'scripts/tokens.json')
+TOKEN_FILE = os.path.join(DASHBOARD_ROOT, 'scripts/tokens.json')
 HEARTBEAT_FILE = os.path.join(WORKSPACE_ROOT, 'HEARTBEAT.md')
 
 class AuthRequest(BaseModel):
@@ -28,6 +28,19 @@ def get_server_uptime():
     hours = uptime_seconds // 3600
     minutes = (uptime_seconds % 3600) // 60
     return f"{hours}h {minutes}m"
+
+def get_git_commits():
+    try:
+        cmd = "git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'"
+        output = subprocess.check_output(cmd, shell=True).decode().splitlines()
+        commits = []
+        for line in output:
+            if "|" in line:
+                msg, date = line.split("|")
+                commits.append({"msg": msg, "date": date})
+        return commits
+    except:
+        return []
 
 def get_agents_info():
     agents = []
@@ -57,13 +70,11 @@ def verify_token_internal(token: str):
 async def get_status(token: str):
     if not verify_token_internal(token): raise HTTPException(status_code=401)
     
-    # Пытаемся достать инфу о Herzbeat из конфига (имитация или поиск в JSON)
-    hb_interval = "30m" # Default
+    hb_interval = "30m"
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, 'r') as f:
                 cfg = json.load(f)
-                # В разных версиях путь может отличаться, ищем намеки на интервал
                 hb_interval = cfg.get("gateway", {}).get("heartbeatInterval", "30m")
         except: pass
 
@@ -79,7 +90,8 @@ async def get_status(token: str):
         "uptime": get_server_uptime(),
         "agents": get_agents_info(),
         "heartbeat_interval": hb_interval,
-        "heartbeat_raw": hb_raw
+        "heartbeat_raw": hb_raw,
+        "commits": get_git_commits()
     }
 
 @app.post("/api/heartbeat/update")
@@ -113,8 +125,10 @@ async def index():
             @media (min-width: 769px) { #desktop-view { display: flex; } #mobile-view { display: none; } }
             .stat-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(51, 65, 85, 0.5); }
             .row-item { border-bottom: 1px solid rgba(51, 65, 85, 0.2); }
+            .row-item:last-child { border-bottom: none; }
             textarea { field-sizing: content; min-height: 80px; }
             .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
+            .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
         </style>
     </head>
     <body class="min-h-screen">
@@ -125,11 +139,11 @@ async def index():
 
         <div id="mobile-view" class="min-h-screen flex flex-col p-4 max-w-md mx-auto">
             <div id="boot-loader" class="flex-1 flex items-center justify-center">
-                <div class="text-emerald-500 animate-pulse text-[10px] tracking-[0.5em]">SYNCING...</div>
+                <div class="text-emerald-500 animate-pulse text-[10px] tracking-[0.5em]">INITIALIZING...</div>
             </div>
 
-            <div id="login-view" class="hidden flex-1 flex flex-col justify-center">
-                <div class="text-center mb-10"><span class="text-6xl block mb-4">🌿</span><h1 class="text-4xl font-bold text-emerald-400 glow-text">Letto</h1></div>
+            <div id="login-view" class="hidden flex-1 flex flex-col justify-center py-10">
+                <div class="text-center mb-12"><span class="text-6xl block mb-4">🌿</span><h1 class="text-4xl font-bold text-emerald-400 glow-text">Letto</h1></div>
                 <div class="glass p-6 rounded-[2.5rem] border border-slate-700/50">
                     <input type="tel" id="token-input" maxlength="6" placeholder="KEY CODE" class="w-full bg-slate-900 border border-slate-600 rounded-2xl py-5 text-center text-3xl tracking-[0.3em] focus:outline-none focus:border-emerald-500 mb-5 text-white">
                     <button onclick="handleLogin()" class="w-full bg-emerald-600 py-5 rounded-2xl font-bold">IDENTIFY</button>
@@ -145,36 +159,45 @@ async def index():
                 </header>
 
                 <!-- Stats -->
-                <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2">
-                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="text-center border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
+                <div class="stat-card p-3 rounded-3xl mb-3 grid grid-cols-3 gap-2">
+                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
+                    <div class="text-center border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
+                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
+                </div>
+
+                <!-- Git Commits -->
+                <div class="stat-card rounded-3xl mb-3 overflow-hidden flex flex-col">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+                        <span class="text-[8px] text-slate-600 font-mono">LATEST 5</span>
+                    </div>
+                    <div id="commits-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
                 </div>
 
                 <!-- Heartbeat Editor -->
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                <div class="stat-card rounded-3xl mb-3 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Heartbeat Tasks</span>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Tasks & Interval</span>
                         <div class="flex items-center">
                             <input type="text" id="hb-interval" class="bg-transparent text-[8px] text-emerald-500 font-bold border-b border-emerald-500/30 w-8 text-center focus:outline-none mr-2">
                             <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded">SAVE</button>
                         </div>
                     </div>
-                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false" placeholder="Напиши задачи здесь..."></textarea>
+                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[9px] text-slate-300 focus:outline-none resize-none" spellcheck="false" placeholder="Heartbeat tasks..."></textarea>
                 </div>
 
                 <!-- Agents List -->
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden">
+                <div class="stat-card rounded-3xl mb-3 overflow-hidden">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Active Agents</span>
-                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Agents Activity</span>
+                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400 font-mono">0</span>
                     </div>
                     <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
                 </div>
 
-                <div class="mt-auto py-6 flex justify-between items-center border-t border-white/5">
-                   <div class="text-[8px] text-slate-500 uppercase font-bold">Uptime: <span id="stat-uptime" class="text-white">--H --M</span></div>
-                   <button onclick="logout()" class="text-[8px] text-slate-700 uppercase tracking-widest">Logout</button>
+                <div class="mt-auto py-4 flex justify-between items-center border-t border-white/5">
+                   <div class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Uptime: <span id="stat-uptime" class="text-white">--H --M</span></div>
+                   <button onclick="logout()" class="text-[8px] text-slate-700 uppercase tracking-widest">Deactivate</button>
                 </div>
             </div>
         </div>
@@ -190,7 +213,7 @@ async def index():
                 if (body) options.body = JSON.stringify({ ...body, token });
                 else if (token) path += (path.includes('?') ? '&' : '?') + 'token=' + token;
                 const res = await fetch(path, options);
-                if (res.status === 401) logout();
+                if (res.status === 401 && path !== '/api/auth') logout();
                 return res.json();
             }
 
@@ -201,16 +224,29 @@ async def index():
                 document.getElementById('stat-ram').innerText = Math.round(data.ram) + '%';
                 document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
                 document.getElementById('stat-uptime').innerText = data.uptime;
-                document.getElementById('stat-agents-count').innerText = data.agents.length;
                 
                 const agentsList = document.getElementById('agents-list');
+                document.getElementById('stat-agents-count').innerText = data.agents.length;
                 agentsList.innerHTML = '';
                 data.agents.forEach(agent => {
                     const row = document.createElement('div');
-                    row.className = 'row-item py-2 flex justify-between items-center';
-                    row.innerHTML = `<span class="text-[9px] text-slate-200">${agent.name}</span><span class="text-[7px] text-slate-500">PID:${agent.pid}</span>`;
+                    row.className = 'row-item py-1.5 flex justify-between items-center';
+                    row.innerHTML = `<span class="text-[9px] text-slate-200 uppercase tracking-tight">${agent.name}</span><span class="text-[7px] text-slate-600 font-mono italic">PID:${agent.pid}</span>`;
                     agentsList.appendChild(row);
                 });
+
+                const commitsList = document.getElementById('commits-list');
+                commitsList.innerHTML = '';
+                if(data.commits && data.commits.length > 0) {
+                    data.commits.forEach(c => {
+                        const row = document.createElement('div');
+                        row.className = 'row-item py-1.5 flex flex-col';
+                        row.innerHTML = `<span class="text-[9px] text-slate-200 line-clamp-1">${c.msg}</span><span class="text-[7px] text-slate-600">${c.date}</span>`;
+                        commitsList.appendChild(row);
+                    });
+                } else {
+                    commitsList.innerHTML = '<div class="py-2 text-[8px] text-slate-600 italic">No git history found</div>';
+                }
 
                 if (document.activeElement !== document.getElementById('heartbeat-editor')) {
                     document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
@@ -234,7 +270,9 @@ async def index():
             function updateTimer() {
                 const timerEl = document.getElementById('sync-timer');
                 const remaining = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
-                timerEl.innerText = Math.floor(remaining / 1000);
+                const seconds = Math.floor(remaining / 1000);
+                const ms = remaining % 1000;
+                timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3, '0')}</span>`;
             }
 
             async function handleLogin() {
@@ -254,7 +292,7 @@ async def index():
                         document.getElementById('dashboard-view').classList.remove('hidden');
                         updateStats();
                         setInterval(updateStats, UPDATE_MS);
-                        setInterval(updateTimer, 1000);
+                        setInterval(updateTimer, 41);
                         return;
                     }
                 }
