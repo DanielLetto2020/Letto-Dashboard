@@ -1,7 +1,7 @@
 const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
-let autoRefreshEnabled = true;
+let autoRefreshEnabled = false;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
