@@ -8,14 +8,27 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
 
-/* Исправление вьювера */
-pre[class*="language-"] {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-}
-code[class*="language-"] {
+/* ПОЛНЫЙ СБРОС И ЖЕСТКАЯ ПРАВКА PRISM */
+pre, code, pre[class*="language-"], code[class*="language-"] {
     white-space: pre !important;
+    word-spacing: normal !important;
     word-break: normal !important;
     word-wrap: normal !important;
+    tab-size: 4 !important;
+    hyphens: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    width: fit-content !important;
+    min-width: 100% !important;
+}
+
+#file-viewer-content pre {
+    overflow: visible !important;
+}
+#file-viewer-content .code-container {
+    overflow: auto;
+    width: 100%;
+    height: 100%;
 }

@@ -46,12 +46,9 @@
             </header>
 
             <div id="main-dashboard-content">
-                <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2 text-center shadow-lg">
+                <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2 text-center">
                     <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="border-x border-white/5">
-                        <div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div>
-                        <div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div>
-                    </div>
+                    <div class="border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
                     <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
                 </div>
 
@@ -86,7 +83,7 @@
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden">
                     <div class="bg-white/5 px-4 py-2 text-left flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Active Agents</span>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Active Agents</span>
                         <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
                     </div>
                     <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
@@ -105,8 +102,9 @@
                     <button onclick="closeFileViewer()" class="text-[10px] bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold uppercase tracking-widest">← Back</button>
                     <div id="viewer-filename" class="text-[10px] text-emerald-400 font-bold font-mono truncate max-w-[60%]">file.py</div>
                 </div>
-                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto font-mono text-[10px] relative min-h-0">
-                    <pre class="m-0"><code id="viewer-text" class="text-slate-300 !whitespace-pre"></code></pre>
+                <!-- Обертка для скролла -->
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 code-container min-h-0">
+                    <pre class="m-0"><code id="viewer-text" class="text-slate-300"></code></pre>
                 </div>
                 <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
                     <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1 disabled:opacity-30">Prev</button>
@@ -123,6 +121,7 @@
 
     <!-- Scripts -->
     <script src="/static/js/app.js"></script>
+    <!-- Подключаем автономную версию Prism без плагинов для теста -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
