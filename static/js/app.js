@@ -52,9 +52,17 @@ async function updateStats() {
         agentsList.appendChild(row);
     });
 
+    // Commits & Branch
     const cl = document.getElementById('commits-list');
+    const gitInfo = data.git || { branch: 'unknown', commits: [] };
+    
+    // Попробуем вставить ветку в заголовок
+    const gitTitle = document.querySelector('#commits-list').previousElementSibling;
+    gitTitle.innerHTML = `<span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+                          <span class="text-[7px] text-emerald-500/80 font-mono ml-2">[${gitInfo.branch}]</span>`;
+
     cl.innerHTML = '';
-    data.commits.forEach(c => {
+    gitInfo.commits.forEach(c => {
         const row = document.createElement('div');
         row.className = 'row-item py-2 flex flex-col text-left';
         row.innerHTML = `<span class="text-[9px] text-slate-200 truncate">${c.msg}</span><span class="text-[7px] text-slate-600 font-bold tracking-tighter uppercase">${c.date}</span>`;

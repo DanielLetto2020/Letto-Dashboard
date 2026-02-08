@@ -7,7 +7,7 @@ import psutil
 
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
-from api.system import get_server_uptime, get_last_hb, get_git_commits, get_agents_info
+from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, read_file_content
 from api.translate import translate_text
@@ -37,6 +37,7 @@ async def auth(data: AuthRequest):
 @app.get("/api/status")
 async def get_status(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
+    git_info = get_git_info()
     return {
         "cpu": psutil.cpu_percent(),
         "ram": psutil.virtual_memory().percent,
@@ -45,7 +46,7 @@ async def get_status(token: str):
         "agents": get_agents_info(),
         "heartbeat_last": get_last_hb(),
         "heartbeat_raw": get_heartbeat_raw(),
-        "commits": get_git_commits(),
+        "git": git_info,
         "files": get_workspace_tree()
     }
 

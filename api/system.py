@@ -17,11 +17,16 @@ def get_last_hb():
         return int(os.path.getmtime(HB_MARKER))
     return int(time.time())
 
-def get_git_commits():
+def get_git_info():
     try:
+        # Получаем текущую ветку
+        branch = subprocess.check_output("git -C " + DASHBOARD_ROOT + " rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
+        # Получаем последние 5 коммитов
         output = subprocess.check_output("git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
-        return [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
-    except: return []
+        commits = [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
+        return {"branch": branch, "commits": commits}
+    except: 
+        return {"branch": "unknown", "commits": []}
 
 def get_agents_info():
     agents = []
