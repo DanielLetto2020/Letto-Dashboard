@@ -1,8 +1,6 @@
 const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
-let currentFilePath = '';
-let currentFilePage = 1;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -22,59 +20,55 @@ async function updateStats() {
     document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
     document.getElementById('stat-uptime').innerText = data.uptime;
     
-    const hbSeconds = Math.floor(Date.now()/1000) - data.heartbeat_last;
-    document.getElementById('hb-last-seen').innerText = `Last: ${hbSeconds < 60 ? 'Now' : Math.floor(hbSeconds/60) + 'm ago'}`;
+    // HB Time
+    const hbS = Math.floor(Date.now()/1000) - data.heartbeat_last;
+    document.getElementById('hb-last-seen').innerText = hbS < 60 ? 'Now' : Math.floor(hbS/60) + 'm ago';
 
+    // Files
+    if (data.files) document.getElementById('files-tree').innerHTML = renderTree(data.files);
+
+    // Agents
     const agentsList = document.getElementById('agents-list');
     document.getElementById('stat-agents-count').innerText = data.agents.length;
     agentsList.innerHTML = '';
-    data.agents.forEach(agent => {
+    data.agents.forEach(a => {
         const row = document.createElement('div');
-        row.className = 'row-item py-2 flex justify-between items-center text-[9px] text-slate-200';
-        row.innerHTML = `<span>${agent.name}</span><span class="text-[7px] text-slate-600">PID:${agent.pid}</span>`;
+        row.className = 'row-item py-2 flex justify-between items-center text-[9px] text-slate-300';
+        row.innerHTML = `<span>${a.name}</span><span class="text-[7px] text-slate-600 font-mono italic">PID:${a.pid}</span>`;
         agentsList.appendChild(row);
     });
 
-    const commitsList = document.getElementById('commits-list');
-    commitsList.innerHTML = '';
+    // Commits
+    const cl = document.getElementById('commits-list');
+    cl.innerHTML = '';
     data.commits.forEach(c => {
         const row = document.createElement('div');
         row.className = 'row-item py-2 flex flex-col text-left';
-        row.innerHTML = `<span class="text-[9px] text-slate-200 truncate">${c.msg}</span><span class="text-[7px] text-slate-600 uppercase font-bold tracking-tighter">${c.date}</span>`;
-        commitsList.appendChild(row);
+        row.innerHTML = `<span class="text-[9px] text-slate-200 truncate">${c.msg}</span><span class="text-[7px] text-slate-600 font-bold tracking-tighter uppercase">${c.date}</span>`;
+        cl.appendChild(row);
     });
 
     if (document.activeElement !== document.getElementById('heartbeat-editor')) {
         document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
     }
-
-    if (data.files) {
-        const treeEl = document.getElementById('files-tree');
-        treeEl.innerHTML = renderTree(data.files);
-    }
-
     lastUpdate = Date.now();
 }
 
 function renderTree(nodes, indent = 0) {
     let html = '';
     nodes.forEach(node => {
-        const padding = indent * 16;
+        const pad = indent * 16;
         if (node.is_dir) {
-            html += `<div class="dir-item py-1.5" style="padding-left: ${padding}px">
-                <div class="flex items-center active:bg-white/5 rounded px-1" onclick="toggleDir(this)">
-                    <span class="mr-2 text-[8px] transform transition-transform folder-arrow">▶</span>
-                    <span class="mr-2">📁</span>
+            html += `<div class="py-1">
+                <div class="flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${pad}px" onclick="toggleDir(this)">
+                    <span class="mr-2 text-[8px] folder-arrow">▶</span><span class="mr-2">📁</span>
                     <span class="text-emerald-400 font-bold uppercase tracking-tight">${node.name}</span>
                 </div>
-                <div class="dir-children hidden">
-                    ${node.children ? renderTree(node.children, indent + 1) : ''}
-                </div>
+                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1) : ''}</div>
             </div>`;
         } else {
-            html += `<div class="file-item py-1.5 flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${padding}px" onclick="openFile('${node.path}')">
-                <span class="mr-2 ml-4">📄</span>
-                <span class="text-slate-300">${node.name}</span>
+            html += `<div class="py-1 flex items-center active:bg-white/5 rounded px-1" style="padding-left: ${pad}px" onclick="openFile('${node.path}')">
+                <span class="mr-2 ml-4">📄</span><span class="text-slate-300">${node.name}</span>
             </div>`;
         }
     });
@@ -82,87 +76,44 @@ function renderTree(nodes, indent = 0) {
 }
 
 function toggleDir(el) {
-    const parent = el.parentElement;
-    const children = parent.querySelector('.dir-children');
+    const children = el.nextElementSibling;
     const arrow = el.querySelector('.folder-arrow');
     const isHidden = children.classList.contains('hidden');
-    
-    if (isHidden) {
-        children.classList.remove('hidden');
-        arrow.style.transform = 'rotate(90deg)';
-    } else {
-        children.classList.add('hidden');
-        arrow.style.transform = 'rotate(0deg)';
-    }
+    children.classList.toggle('hidden');
+    arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
 }
 
-function toggleAllDirs(expand) {
-    document.querySelectorAll('.dir-children').forEach(el => {
-        if (expand) el.classList.remove('hidden');
-        else el.classList.add('hidden');
-    });
-    document.querySelectorAll('.folder-arrow').forEach(el => {
-        el.style.transform = expand ? 'rotate(90deg)' : 'rotate(0deg)';
-    });
+function toggleAllDirs(exp) {
+    document.querySelectorAll('.dir-children').forEach(c => c.classList.toggle('hidden', !exp));
+    document.querySelectorAll('.folder-arrow').forEach(a => a.style.transform = exp ? 'rotate(90deg)' : 'rotate(0deg)');
 }
 
 async function openFile(path, page = 1) {
-    currentFilePath = path;
-    currentFilePage = page;
-    
     document.getElementById('main-dashboard-content').classList.add('hidden');
     document.getElementById('file-viewer-content').classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
-    document.getElementById('viewer-text').innerText = 'Loading content...';
     
-    // Сброс класса языка перед новой загрузкой
     const codeEl = document.getElementById('viewer-text');
-    codeEl.className = 'text-slate-300';
+    codeEl.innerText = 'Loading...';
+    codeEl.className = ''; 
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
-    
-    if (data.error) {
-        codeEl.innerText = 'Error: ' + data.error;
-        return;
-    }
-    
-    const ext = path.split('.').pop().toLowerCase();
-    const langMap = {
-        'py': 'python',
-        'js': 'javascript',
-        'ts': 'typescript',
-        'html': 'html',
-        'css': 'css',
-        'md': 'markdown',
-        'json': 'json'
-    };
-    
-    if (langMap[ext]) {
-        codeEl.classList.add('language-' + langMap[ext]);
-    }
+    if (data.error) { codeEl.innerText = data.error; return; }
 
     codeEl.innerText = data.content;
-    
-    if (window.Prism) {
-        Prism.highlightElement(codeEl);
+    if (window.hljs) {
+        hljs.highlightElement(codeEl);
     }
-    
+
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {
         pager.classList.remove('hidden');
         document.getElementById('page-info').innerText = `Page ${data.page} of ${data.total_pages}`;
-        
-        const prev = document.getElementById('page-prev');
-        const next = document.getElementById('page-next');
-        
-        prev.disabled = (data.page <= 1);
-        next.disabled = (data.page >= data.total_pages);
-        
-        prev.onclick = () => openFile(path, data.page - 1);
-        next.onclick = () => openFile(path, data.page + 1);
-    } else {
-        pager.classList.add('hidden');
-    }
+        document.getElementById('page-prev').onclick = () => openFile(path, data.page - 1);
+        document.getElementById('page-next').onclick = () => openFile(path, data.page + 1);
+        document.getElementById('page-prev').disabled = data.page <= 1;
+        document.getElementById('page-next').disabled = data.page >= data.total_pages;
+    } else pager.classList.add('hidden');
 }
 
 function closeFileViewer() {
@@ -171,8 +122,7 @@ function closeFileViewer() {
 }
 
 async function saveHeartbeat() {
-    const content = document.getElementById('heartbeat-editor').value;
-    const res = await api('/api/heartbeat/update', 'POST', { content });
+    const res = await api('/api/heartbeat/update', 'POST', { content: document.getElementById('heartbeat-editor').value });
     if (res.success) {
         const btn = document.querySelector('button[onclick="saveHeartbeat()"]');
         btn.innerText = 'OK';
@@ -183,24 +133,22 @@ async function saveHeartbeat() {
 function updateTimer() {
     const timerEl = document.getElementById('sync-timer');
     if(!timerEl) return;
-    const remaining = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
-    const seconds = Math.floor(remaining / 1000);
-    const ms = remaining % 1000;
-    timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3, '0')}</span>`;
+    const rem = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
+    timerEl.innerHTML = `${Math.floor(rem/1000)}<span class="ms-text">.${(rem%1000).toString().padStart(3,'0')}</span>`;
 }
 
 async function handleLogin() {
-    const token = document.getElementById('token-input').value;
-    const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
-    if (res.ok) { localStorage.setItem(authKey, token); location.reload(); }
+    const t = document.getElementById('token-input').value;
+    const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t }) });
+    if (res.ok) { localStorage.setItem(authKey, t); location.reload(); }
 }
 
 function logout() { localStorage.removeItem(authKey); location.reload(); }
 
 window.onload = async () => {
-    const savedToken = localStorage.getItem(authKey);
-    if (savedToken) {
-        const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: savedToken }) });
+    const t = localStorage.getItem(authKey);
+    if (t) {
+        const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t }) });
         if (res.ok) {
             document.getElementById('boot-loader').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');

@@ -8,27 +8,20 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
 
-/* ПОЛНЫЙ СБРОС И ЖЕСТКАЯ ПРАВКА PRISM */
-pre, code, pre[class*="language-"], code[class*="language-"] {
+/* Чистые стили для Highlight.js */
+#viewer-text {
+    display: block;
     white-space: pre !important;
-    word-spacing: normal !important;
-    word-break: normal !important;
     word-wrap: normal !important;
-    tab-size: 4 !important;
-    hyphens: none !important;
+    overflow-x: visible !important;
+    font-size: 10px;
+    line-height: 1.5;
+}
+pre {
+    margin: 0;
+    padding: 0;
+}
+.hljs {
     background: transparent !important;
-    margin: 0 !important;
     padding: 0 !important;
-    display: block !important;
-    width: fit-content !important;
-    min-width: 100% !important;
-}
-
-#file-viewer-content pre {
-    overflow: visible !important;
-}
-#file-viewer-content .code-container {
-    overflow: auto;
-    width: 100%;
-    height: 100%;
 }
