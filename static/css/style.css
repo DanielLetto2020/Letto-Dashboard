@@ -7,3 +7,15 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 .row-item { border-bottom: 1px solid rgba(51, 65, 85, 0.2); }
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
+
+/* Исправление вьювера */
+pre[class*="language-"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+code[class*="language-"] {
+    white-space: pre !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+}
