@@ -19,14 +19,24 @@ def get_last_hb():
 
 def get_git_info():
     try:
-        # Получаем текущую ветку
         branch = subprocess.check_output("git -C " + DASHBOARD_ROOT + " rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
-        # Получаем последние 5 коммитов
         output = subprocess.check_output("git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
         commits = [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
         return {"branch": branch, "commits": commits}
     except: 
         return {"branch": "unknown", "commits": []}
+
+def get_ai_context():
+    # В реальных условиях мы бы вызывали внутренний API OpenClaw.
+    # Так как я не могу вызвать инструмент напрямую из скрипта Python, 
+    # я буду использовать временный файл-заглушку, который буду обновлять сам.
+    # Но для демонстрации я распаршу данные из моего последнего вызова session_status.
+    try:
+        if os.path.exists(os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json')):
+            with open(os.path.join(DASHBOARD_ROOT, 'scripts/ai_context.json'), 'r') as f:
+                return json.load(f)
+    except: pass
+    return {"used": 0, "total": 1000000, "percent": 0}
 
 def get_agents_info():
     agents = []

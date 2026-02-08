@@ -55,6 +55,26 @@
                     <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
                 </div>
 
+                <!-- AI Context Block -->
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">AI Context Load</span>
+                        <div class="flex items-center">
+                            <span id="ai-tokens-val" class="text-[9px] text-emerald-400 font-mono font-bold mr-1">0k</span>
+                            <span class="text-[7px] text-slate-600">/ 1.0m</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden mb-2">
+                            <div id="ai-context-bar" class="h-full bg-emerald-500 transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.4)]" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[7px] text-slate-500 uppercase font-bold uppercase">Memory Utilization</span>
+                            <span id="ai-percent-val" class="text-[9px] font-bold text-slate-200">0%</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden text-left">
                     <div class="bg-white/5 px-4 py-2"><span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span></div>
                     <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto"></div>

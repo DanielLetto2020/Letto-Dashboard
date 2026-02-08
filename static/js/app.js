@@ -23,9 +23,6 @@ async function api(path, method = 'GET', body = null) {
 }
 
 async function updateStats() {
-    // Если это вызов по таймеру (setInterval) и автообновление выключено — выходим
-    // Но если это ручной вызов (например, нажатие кнопки 🔄), аргумента не будет, 
-    // поэтому мы проверяем флаг. Кнопка теперь будет вызывать updateStats(true).
     const isManual = arguments[0] === true;
     if (!autoRefreshEnabled && !isManual) return;
     
@@ -37,6 +34,13 @@ async function updateStats() {
     document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
     document.getElementById('stat-uptime').innerText = data.uptime;
     
+    // AI Context Update
+    if (data.ai) {
+        document.getElementById('ai-tokens-val').innerText = (data.ai.used / 1000).toFixed(1) + 'k';
+        document.getElementById('ai-percent-val').innerText = data.ai.percent + '%';
+        document.getElementById('ai-context-bar').style.width = data.ai.percent + '%';
+    }
+
     const hbS = Math.floor(Date.now()/1000) - data.heartbeat_last;
     document.getElementById('hb-last-seen').innerText = hbS < 60 ? 'Now' : Math.floor(hbS/60) + 'm ago';
     
@@ -52,13 +56,10 @@ async function updateStats() {
         agentsList.appendChild(row);
     });
 
-    // Commits & Branch
     const cl = document.getElementById('commits-list');
     const gitInfo = data.git || { branch: 'unknown', commits: [] };
-    
-    // Попробуем вставить ветку в заголовок
     const gitTitle = document.querySelector('#commits-list').previousElementSibling;
-    gitTitle.innerHTML = `<span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+    gitTitle.innerHTML = `<span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Git History</span>
                           <span class="text-[7px] text-emerald-500/80 font-mono ml-2">[${gitInfo.branch}]</span>`;
 
     cl.innerHTML = '';
@@ -225,8 +226,8 @@ window.onload = async () => {
         if (res.ok) {
             document.getElementById('boot-loader').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
-            updateStats(true); // Принудительный первый запуск
-            setInterval(updateStats, 1000); // Проверяем каждую секунду, но внутри logic автообновления
+            updateStats(true); 
+            setInterval(updateStats, 1000); 
             setInterval(updateTimer, 41);
             return;
         }
