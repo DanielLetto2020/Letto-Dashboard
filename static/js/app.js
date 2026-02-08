@@ -2,6 +2,9 @@ const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
 let autoRefreshEnabled = false;
+let originalContent = '';
+let translatedContent = '';
+let isTranslated = false;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -90,11 +93,23 @@ async function openFile(path, page = 1) {
     
     const codeEl = document.getElementById('viewer-text');
     codeEl.innerText = 'Loading...';
+    
+    const translateBtn = document.getElementById('translate-btn');
+    translateBtn.classList.add('hidden');
+    isTranslated = false;
+    translateBtn.innerText = 'Translate';
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     if (data.error) { codeEl.innerText = data.error; return; }
 
-    codeEl.innerText = data.content;
+    originalContent = data.content;
+    translatedContent = '';
+    codeEl.innerText = originalContent;
+
+    const ext = path.split('.').pop().toLowerCase();
+    if (ext === 'md' || ext === 'txt') {
+        translateBtn.classList.remove('hidden');
+    }
 
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {
@@ -110,6 +125,32 @@ async function openFile(path, page = 1) {
 function closeFileViewer() {
     document.getElementById('file-viewer-content').classList.add('hidden');
     document.getElementById('main-dashboard-content').classList.remove('hidden');
+}
+
+async function toggleTranslation() {
+    const btn = document.getElementById('translate-btn');
+    const codeEl = document.getElementById('viewer-text');
+    
+    if (isTranslated) {
+        codeEl.innerText = originalContent;
+        btn.innerText = 'Translate';
+        isTranslated = false;
+    } else {
+        if (!translatedContent) {
+            btn.innerText = '...';
+            const res = await api('/api/translate', 'POST', { text: originalContent });
+            if (res.translated) {
+                translatedContent = res.translated;
+            } else {
+                alert('Translation failed');
+                btn.innerText = 'Translate';
+                return;
+            }
+        }
+        codeEl.innerText = translatedContent;
+        btn.innerText = 'Original';
+        isTranslated = true;
+    }
 }
 
 async function saveHeartbeat() {
