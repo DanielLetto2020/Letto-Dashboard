@@ -1,6 +1,7 @@
 const authKey = 'letto_auth_token';
 let lastUpdate = Date.now();
 const UPDATE_MS = 20000;
+let autoRefreshEnabled = true;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -13,6 +14,9 @@ async function api(path, method = 'GET', body = null) {
 }
 
 async function updateStats() {
+    // Если автообновление выключено и это вызов по таймеру (без аргументов) — выходим
+    if (!autoRefreshEnabled && arguments.length === 0) return;
+    
     const data = await api('/api/status');
     if (!data) return;
     document.getElementById('stat-cpu').innerText = Math.round(data.cpu) + '%';
@@ -120,8 +124,25 @@ async function saveHeartbeat() {
 function updateTimer() {
     const timerEl = document.getElementById('sync-timer');
     if(!timerEl) return;
+    
+    if (!autoRefreshEnabled) {
+        timerEl.parentElement.style.opacity = '0.3';
+        return;
+    }
+    timerEl.parentElement.style.opacity = '1';
+    
     const rem = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
-    timerEl.innerHTML = `${Math.floor(rem/1000)}<span class="ms-text">.${(rem%1000).toString().padStart(3,'0')}</span>`;
+    const seconds = Math.floor(rem / 1000);
+    const ms = rem % 1000;
+    timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3, '0')}</span>`;
+}
+
+function toggleAutoRefresh(enabled) {
+    autoRefreshEnabled = enabled;
+    if (enabled) {
+        lastUpdate = Date.now();
+        updateStats(); // Вызываем немедленное обновление при включении
+    }
 }
 
 async function handleLogin() {
