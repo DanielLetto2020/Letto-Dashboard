@@ -45,8 +45,31 @@ async function updateStats() {
     if (document.activeElement !== document.getElementById('heartbeat-editor')) {
         document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
     }
+
+    // Update File Tree
+    const treeEl = document.getElementById('files-tree');
+    if (treeEl && data.files) {
+        treeEl.innerHTML = renderTree(data.files);
+    }
+
     lastUpdate = Date.now();
     console.log("Stats updated at " + new Date().toLocaleTimeString());
+}
+
+function renderTree(nodes, indent = 0) {
+    let html = '';
+    nodes.forEach(node => {
+        const icon = node.is_dir ? '📁' : '📄';
+        const padding = indent * 12;
+        html += `<div class="py-1 flex items-center" style="padding-left: ${padding}px">
+            <span class="mr-1.5 opacity-70">${icon}</span>
+            <span class="${node.is_dir ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${node.name}</span>
+        </div>`;
+        if (node.is_dir && node.children) {
+            html += renderTree(node.children, indent + 1);
+        }
+    });
+    return html;
 }
 
 async function saveHeartbeat() {

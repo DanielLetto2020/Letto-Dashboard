@@ -70,13 +70,23 @@
 
             <!-- Heartbeat -->
             <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Heartbeat Tasks</span>
+                <div class="bg-white/5 px-4 py-2 flex justify-between items-center text-left">
+                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Heartbeat Tasks</span>
                     <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold uppercase">Never</div>
                 </div>
                 <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false"></textarea>
                 <div class="px-4 pb-4 flex justify-end">
                     <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
+                </div>
+            </div>
+
+            <!-- Workspace Explorer -->
+            <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                <div class="bg-white/5 px-4 py-2 flex justify-between items-center text-left">
+                    <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
+                </div>
+                <div id="files-tree" class="px-4 py-2 text-left max-h-64 overflow-y-auto text-[10px] font-mono leading-relaxed">
+                    <div class="text-slate-600 italic">Exploring structure...</div>
                 </div>
             </div>
 

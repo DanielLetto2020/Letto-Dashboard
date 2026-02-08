@@ -9,6 +9,7 @@ import psutil
 from api.auth import verify_token
 from api.system import get_server_uptime, get_last_hb, get_git_commits, get_agents_info
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
+from api.files import get_workspace_tree
 
 app = FastAPI()
 
@@ -39,7 +40,8 @@ async def get_status(token: str):
         "agents": get_agents_info(),
         "heartbeat_last": get_last_hb(),
         "heartbeat_raw": get_heartbeat_raw(),
-        "commits": get_git_commits()
+        "commits": get_git_commits(),
+        "files": get_workspace_tree()
     }
 
 @app.post("/api/heartbeat/update")
