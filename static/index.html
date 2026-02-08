@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Prism.js для подсветки синтаксиса -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
 </head>
 <body class="min-h-screen">
     <div id="desktop-view" class="h-screen flex flex-col items-center justify-center p-10 text-center text-slate-600">
@@ -110,7 +112,7 @@
                     <div id="viewer-filename" class="text-[10px] text-emerald-400 font-bold font-mono truncate max-w-[60%]">file.txt</div>
                 </div>
                 <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto font-mono text-[10px] relative">
-                    <pre id="viewer-text" class="text-slate-300 whitespace-pre-wrap break-all"></pre>
+                    <pre class="m-0"><code id="viewer-text" class="text-slate-300 whitespace-pre-wrap break-all"></code></pre>
                 </div>
                 <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
                     <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1 disabled:opacity-30">Prev</button>
@@ -126,5 +128,8 @@
     </div>
 
     <script src="/static/js/app.js"></script>
+    <!-- Prism.js core + languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>

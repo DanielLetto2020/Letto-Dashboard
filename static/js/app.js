@@ -115,14 +115,37 @@ async function openFile(path, page = 1) {
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     document.getElementById('viewer-text').innerText = 'Loading content...';
     
+    // Сброс класса языка перед новой загрузкой
+    const codeEl = document.getElementById('viewer-text');
+    codeEl.className = 'text-slate-300 whitespace-pre-wrap break-all';
+
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     
     if (data.error) {
-        document.getElementById('viewer-text').innerText = 'Error: ' + data.error;
+        codeEl.innerText = 'Error: ' + data.error;
         return;
     }
     
-    document.getElementById('viewer-text').innerText = data.content;
+    const ext = path.split('.').pop().toLowerCase();
+    const langMap = {
+        'py': 'python',
+        'js': 'javascript',
+        'ts': 'typescript',
+        'html': 'html',
+        'css': 'css',
+        'md': 'markdown',
+        'json': 'json'
+    };
+    
+    if (langMap[ext]) {
+        codeEl.classList.add('language-' + langMap[ext]);
+    }
+
+    codeEl.innerText = data.content;
+    
+    if (window.Prism) {
+        Prism.highlightElement(codeEl);
+    }
     
     const pager = document.getElementById('viewer-pagination');
     if (data.total_pages > 1) {
