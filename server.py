@@ -11,9 +11,9 @@ import subprocess
 app = FastAPI()
 WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DASHBOARD_ROOT = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".openclaw/openclaw.json")
 TOKEN_FILE = os.path.join(DASHBOARD_ROOT, 'scripts/tokens.json')
 HEARTBEAT_FILE = os.path.join(WORKSPACE_ROOT, 'HEARTBEAT.md')
+HB_MARKER = os.path.join(WORKSPACE_ROOT, '.heartbeat_last_run')
 
 class AuthRequest(BaseModel):
     token: str
@@ -25,37 +25,30 @@ class HeartbeatUpdate(BaseModel):
 def get_server_uptime():
     lib_boot_time = psutil.boot_time()
     uptime_seconds = int(time.time() - lib_boot_time)
-    hours = uptime_seconds // 3600
-    minutes = (uptime_seconds % 3600) // 60
-    return f"{hours}h {minutes}m"
+    return f"{uptime_seconds // 3600}h {(uptime_seconds % 3600) // 60}m"
+
+def get_last_hb():
+    if os.path.exists(HB_MARKER):
+        return int(os.path.getmtime(HB_MARKER))
+    return int(time.time())
 
 def get_git_commits():
     try:
-        cmd = "git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'"
-        output = subprocess.check_output(cmd, shell=True).decode().splitlines()
-        commits = []
-        for line in output:
-            if "|" in line:
-                msg, date = line.split("|")
-                commits.append({"msg": msg, "date": date})
-        return commits
-    except:
-        return []
+        output = subprocess.check_output("git -C " + DASHBOARD_ROOT + " log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
+        return [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
+    except: return []
 
 def get_agents_info():
     agents = []
     try:
         cmd = "ps -eo pid,cmd | grep -E 'openclaw|node.*index.mjs|python3.*server.py' | grep -v grep"
         output = subprocess.check_output(cmd, shell=True).decode().splitlines()
-        for line in output:
-            line = line.strip()
-            if not line: continue
-            pid = line.split()[0]
-            cmd_full = " ".join(line.split()[1:])
-            name = "Unknown Agent"
-            if "server.py" in cmd_full: name = "Letto UI Manager"
-            elif "openclaw" in cmd_full and "gateway" in cmd_full: name = "Letto Core Gateway"
-            elif "node" in cmd_full and "index.mjs" in cmd_full: name = "Main Agent Session"
+        for l in output:
+            l = l.strip()
+            if not l: continue
+            pid = l.split()[0]
+            cmd_f = " ".join(l.split()[1:])
+            name = "Letto UI Manager" if "server.py" in cmd_f else ("Letto Core Gateway" if "gateway" in cmd_f else "Main Session")
             agents.append({"pid": pid, "name": name})
     except: pass
     return agents
@@ -70,18 +63,9 @@ def verify_token_internal(token: str):
 async def get_status(token: str):
     if not verify_token_internal(token): raise HTTPException(status_code=401)
     
-    hb_interval = "30m"
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, 'r') as f:
-                cfg = json.load(f)
-                hb_interval = cfg.get("gateway", {}).get("heartbeatInterval", "30m")
-        except: pass
-
     hb_raw = ""
     if os.path.exists(HEARTBEAT_FILE):
-        with open(HEARTBEAT_FILE, 'r') as f:
-            hb_raw = f.read()
+        with open(HEARTBEAT_FILE, 'r') as f: hb_raw = f.read()
 
     return {
         "cpu": psutil.cpu_percent(),
@@ -89,7 +73,7 @@ async def get_status(token: str):
         "disk": psutil.disk_usage('/').percent,
         "uptime": get_server_uptime(),
         "agents": get_agents_info(),
-        "heartbeat_interval": hb_interval,
+        "heartbeat_last": get_last_hb(),
         "heartbeat_raw": hb_raw,
         "commits": get_git_commits()
     }
@@ -97,8 +81,7 @@ async def get_status(token: str):
 @app.post("/api/heartbeat/update")
 async def update_heartbeat(data: HeartbeatUpdate):
     if not verify_token_internal(data.token): raise HTTPException(status_code=401)
-    with open(HEARTBEAT_FILE, 'w') as f:
-        f.write(data.content)
+    with open(HEARTBEAT_FILE, 'w') as f: f.write(data.content)
     return {"success": True}
 
 @app.post("/api/auth")
@@ -125,16 +108,13 @@ async def index():
             @media (min-width: 769px) { #desktop-view { display: flex; } #mobile-view { display: none; } }
             .stat-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(51, 65, 85, 0.5); }
             .row-item { border-bottom: 1px solid rgba(51, 65, 85, 0.2); }
-            .row-item:last-child { border-bottom: none; }
-            textarea { field-sizing: content; min-height: 80px; }
-            .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
+            textarea { field-sizing: content; min-height: 70px; }
             .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
         </style>
     </head>
     <body class="min-h-screen">
         <div id="desktop-view" class="h-screen flex flex-col items-center justify-center p-10 text-center text-slate-600">
-            <div class="text-6xl mb-6">🚫</div>
-            <h1 class="text-xl font-bold uppercase tracking-widest text-red-500/80">Mobile Only</h1>
+            <h1 class="text-xl font-bold uppercase tracking-widest text-red-500/80">Mobile Terminal Only</h1>
         </div>
 
         <div id="mobile-view" class="min-h-screen flex flex-col p-4 max-w-md mx-auto">
@@ -142,10 +122,10 @@ async def index():
                 <div class="text-emerald-500 animate-pulse text-[10px] tracking-[0.5em]">INITIALIZING...</div>
             </div>
 
-            <div id="login-view" class="hidden flex-1 flex flex-col justify-center py-10">
-                <div class="text-center mb-12"><span class="text-6xl block mb-4">🌿</span><h1 class="text-4xl font-bold text-emerald-400 glow-text">Letto</h1></div>
-                <div class="glass p-6 rounded-[2.5rem] border border-slate-700/50">
-                    <input type="tel" id="token-input" maxlength="6" placeholder="KEY CODE" class="w-full bg-slate-900 border border-slate-600 rounded-2xl py-5 text-center text-3xl tracking-[0.3em] focus:outline-none focus:border-emerald-500 mb-5 text-white">
+            <div id="login-view" class="hidden flex-1 flex flex-col justify-center">
+                <div class="text-center mb-10"><span class="text-6xl block mb-4">🌿</span><h1 class="text-4xl font-bold text-emerald-400 glow-text text-center">Letto</h1></div>
+                <div class="bg-slate-800/40 p-6 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-xl">
+                    <input type="tel" id="token-input" maxlength="6" placeholder="SYNC CODE" class="w-full bg-slate-900 border border-slate-600 rounded-2xl py-5 text-center text-3xl tracking-[0.3em] focus:outline-none focus:border-emerald-500 mb-5 text-white placeholder:text-slate-800">
                     <button onclick="handleLogin()" class="w-full bg-emerald-600 py-5 rounded-2xl font-bold">IDENTIFY</button>
                 </div>
             </div>
@@ -158,46 +138,39 @@ async def index():
                     </div>
                 </header>
 
-                <!-- Stats -->
                 <div class="stat-card p-3 rounded-3xl mb-3 grid grid-cols-3 gap-2">
-                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="text-center border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
-                </div>
-
-                <!-- Git Commits -->
-                <div class="stat-card rounded-3xl mb-3 overflow-hidden flex flex-col">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
-                        <span class="text-[8px] text-slate-600 font-mono">LATEST 5</span>
-                    </div>
-                    <div id="commits-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
+                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase text-center">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
+                    <div class="text-center border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase text-center">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
+                    <div class="text-center"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase text-center">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
                 </div>
 
                 <!-- Heartbeat Editor -->
                 <div class="stat-card rounded-3xl mb-3 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Tasks & Interval</span>
-                        <div class="flex items-center">
-                            <input type="text" id="hb-interval" class="bg-transparent text-[8px] text-emerald-500 font-bold border-b border-emerald-500/30 w-8 text-center focus:outline-none mr-2">
-                            <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded">SAVE</button>
-                        </div>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Heartbeat Status</span>
+                        <div id="hb-last-seen" class="text-[8px] text-slate-500 font-bold uppercase">Never</div>
                     </div>
-                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[9px] text-slate-300 focus:outline-none resize-none" spellcheck="false" placeholder="Heartbeat tasks..."></textarea>
+                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[9px] text-slate-300 focus:outline-none resize-none" spellcheck="false" placeholder="Active tasks..."></textarea>
+                    <div class="p-2 pt-0 flex justify-end">
+                        <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
+                    </div>
                 </div>
 
-                <!-- Agents List -->
-                <div class="stat-card rounded-3xl mb-3 overflow-hidden">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Agents Activity</span>
-                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400 font-mono">0</span>
+                <!-- History & info -->
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="stat-card rounded-3xl overflow-hidden p-3 text-left">
+                        <span class="text-[7px] text-slate-500 uppercase font-bold block mb-2">Agents</span>
+                        <div id="agents-list" class="max-h-24 overflow-y-auto"></div>
                     </div>
-                    <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
+                    <div class="stat-card rounded-3xl overflow-hidden p-3 text-left">
+                        <span class="text-[7px] text-slate-500 uppercase font-bold block mb-2">Git Log</span>
+                        <div id="commits-list" class="max-h-24 overflow-y-auto"></div>
+                    </div>
                 </div>
 
-                <div class="mt-auto py-4 flex justify-between items-center border-t border-white/5">
-                   <div class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Uptime: <span id="stat-uptime" class="text-white">--H --M</span></div>
-                   <button onclick="logout()" class="text-[8px] text-slate-700 uppercase tracking-widest">Deactivate</button>
+                <div class="mt-auto py-4 flex justify-between items-center border-t border-white/5 text-[9px] font-bold">
+                   <div class="text-slate-500 uppercase">Uptime: <span id="stat-uptime" class="text-white">--H --M</span></div>
+                   <button onclick="logout()" class="text-slate-700 uppercase tracking-widest">Deactivate</button>
                 </div>
             </div>
         </div>
@@ -225,34 +198,31 @@ async def index():
                 document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
                 document.getElementById('stat-uptime').innerText = data.uptime;
                 
+                // Last HB
+                const hbSeconds = Math.floor(Date.now()/1000) - data.heartbeat_last;
+                const hbText = hbSeconds < 60 ? 'Just now' : `${Math.floor(hbSeconds/60)}m ago`;
+                document.getElementById('hb-last-seen').innerText = `Last run: ${hbText}`;
+
                 const agentsList = document.getElementById('agents-list');
-                document.getElementById('stat-agents-count').innerText = data.agents.length;
                 agentsList.innerHTML = '';
                 data.agents.forEach(agent => {
                     const row = document.createElement('div');
-                    row.className = 'row-item py-1.5 flex justify-between items-center';
-                    row.innerHTML = `<span class="text-[9px] text-slate-200 uppercase tracking-tight">${agent.name}</span><span class="text-[7px] text-slate-600 font-mono italic">PID:${agent.pid}</span>`;
+                    row.className = 'py-1 border-b border-white/5 text-[8px] text-slate-300';
+                    row.innerText = agent.name;
                     agentsList.appendChild(row);
                 });
 
                 const commitsList = document.getElementById('commits-list');
                 commitsList.innerHTML = '';
-                if(data.commits && data.commits.length > 0) {
-                    data.commits.forEach(c => {
-                        const row = document.createElement('div');
-                        row.className = 'row-item py-1.5 flex flex-col';
-                        row.innerHTML = `<span class="text-[9px] text-slate-200 line-clamp-1">${c.msg}</span><span class="text-[7px] text-slate-600">${c.date}</span>`;
-                        commitsList.appendChild(row);
-                    });
-                } else {
-                    commitsList.innerHTML = '<div class="py-2 text-[8px] text-slate-600 italic">No git history found</div>';
-                }
+                data.commits.forEach(c => {
+                    const row = document.createElement('div');
+                    row.className = 'py-1 border-b border-white/5 text-[7px] text-slate-500 truncate';
+                    row.innerText = c.msg;
+                    commitsList.appendChild(row);
+                });
 
                 if (document.activeElement !== document.getElementById('heartbeat-editor')) {
                     document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
-                }
-                if (document.activeElement !== document.getElementById('hb-interval')) {
-                    document.getElementById('hb-interval').value = data.heartbeat_interval;
                 }
                 lastUpdate = Date.now();
             }
@@ -262,8 +232,8 @@ async def index():
                 const res = await api('/api/heartbeat/update', 'POST', { content });
                 if (res.success) {
                     const btn = document.querySelector('button[onclick="saveHeartbeat()"]');
-                    btn.innerText = 'OK!';
-                    setTimeout(() => btn.innerText = 'SAVE', 2000);
+                    btn.innerText = 'SAVED';
+                    setTimeout(() => btn.innerText = 'SAVE TASKS', 2000);
                 }
             }
 
