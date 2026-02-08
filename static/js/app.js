@@ -117,7 +117,7 @@ async function openFile(path, page = 1) {
     
     // Сброс класса языка перед новой загрузкой
     const codeEl = document.getElementById('viewer-text');
-    codeEl.className = 'text-slate-300 whitespace-pre-wrap break-all';
+    codeEl.className = 'text-slate-300';
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     
