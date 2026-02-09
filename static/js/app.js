@@ -6,6 +6,39 @@ let originalContent = '';
 let translatedContent = '';
 let isTranslated = false;
 
+async function downloadBackup() {
+    const btn = document.getElementById('backup-btn');
+    const originalContent = btn.innerHTML;
+    const token = localStorage.getItem(authKey);
+    
+    btn.innerHTML = '<span>⌛</span> <span>Zipping...</span>';
+    btn.disabled = true;
+    
+    try {
+        const url = `/api/system/backup?token=${token}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const blob = await res.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            const dateStr = new Date().toISOString().split('T')[0];
+            link.download = `letto_backup_${dateStr}.zip`;
+            link.click();
+            btn.innerHTML = '<span>✅</span> <span>Done!</span>';
+        } else {
+            btn.innerHTML = '<span>❌</span> <span>Error</span>';
+        }
+    } catch (e) {
+        console.error("Backup error:", e);
+        btn.innerHTML = '<span>❌</span> <span>Error</span>';
+    }
+    
+    setTimeout(() => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }, 5000);
+}
+
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
     const options = { method, headers: { 'Content-Type': 'application/json' } };

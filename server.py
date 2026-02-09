@@ -20,13 +20,26 @@ from pydantic import BaseModel
 
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
-from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context
+from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context, create_backup_zip
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
 from api.cron import get_cron_jobs
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 
 app = FastAPI()
+
+# ... (в конец списка эндпоинтов перед index)
+@app.get("/api/system/backup")
+async def get_backup(token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    file_obj = create_backup_zip()
+    filename = f"letto_backup_{time.strftime('%Y%m%d_%H%M')}.zip"
+    return StreamingResponse(
+        file_obj, 
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 # Пути
 DASHBOARD_ROOT = os.path.dirname(os.path.abspath(__file__))
