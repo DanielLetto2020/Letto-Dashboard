@@ -93,6 +93,10 @@ async def download_project(name: str, token: str):
     workspace_root = os.path.abspath(os.path.join(DASHBOARD_ROOT, "../.."))
     project_path = os.path.join(workspace_root, "projects", name)
     
+    project_path = os.path.abspath(project_path) # Normalize the path
+    if not project_path.startswith(os.path.abspath(os.path.join(workspace_root, "projects"))):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     if not os.path.exists(project_path) or not os.path.isdir(project_path):
         raise HTTPException(status_code=404, detail="Project not found")
 
