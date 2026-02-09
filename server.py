@@ -115,19 +115,6 @@ async def download_project(name: str, token: str):
         headers={"Content-Disposition": f"attachment; filename={name}.zip"}
     )
 
-# SPA Routing: Fallback for all other routes to index.html
-@app.get("/{path:path}")
-async def spa_fallback(path: str):
-    # If path starts with api/, it's a real 404
-    if path.startswith("api/"):
-        raise HTTPException(status_code=404)
-    # Check if file exists in static (e.g. css/style.css)
-    static_file = os.path.join(DASHBOARD_ROOT, "static", path)
-    if os.path.exists(static_file) and os.path.isfile(static_file):
-        return FileResponse(static_file)
-    # Otherwise return SPA index
-    return FileResponse(os.path.join(DASHBOARD_ROOT, "static", "index.html"))
-
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
@@ -160,7 +147,7 @@ async def update_heartbeat(data: HeartbeatUpdate):
     return {"success": True}
 
 @app.get("/api/files/read")
-async def get_file(path: str, page: int = 1, token: str = None):
+async def get_file(path: str, token: str, page: int = 1):
     if not verify_token(token): raise HTTPException(status_code=401)
     return read_file_content(path, page)
 
@@ -168,6 +155,19 @@ async def get_file(path: str, page: int = 1, token: str = None):
 async def translate(data: TranslateRequest):
     if not verify_token(data.token): raise HTTPException(status_code=401)
     return {"translated": translate_text(data.text)}
+
+# SPA Routing: Fallback for all other routes to index.html
+@app.get("/{path:path}")
+async def spa_fallback(path: str):
+    # If path starts with api/, it's a real 404
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    # Check if file exists in static (e.g. css/style.css)
+    static_file = os.path.join(DASHBOARD_ROOT, "static", path)
+    if os.path.exists(static_file) and os.path.isfile(static_file):
+        return FileResponse(static_file)
+    # Otherwise return SPA index
+    return FileResponse(os.path.join(DASHBOARD_ROOT, "static", "index.html"))
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/agents", response_class=HTMLResponse)
