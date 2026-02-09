@@ -1,21 +1,14 @@
 # Env
 .env
 
-# Data & Tokens
+# Data & Tokens (Never commit)
 scripts/*.json
 
-# Logs
+# Logs (Never commit)
 configs/*.log
-access.log
-error.log
 
-# Configs
-configs/*.conf
-
-# Python
+# Project specific
 __pycache__/
 *.pyc
-
-# System
 .heartbeat_last_run
 .DS_Store

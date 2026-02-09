@@ -1,0 +1,28 @@
+server {
+    server_name ${DASHBOARD_DOMAIN};
+
+    access_log /path/to/dashboard/configs/access.log;
+    error_log /path/to/dashboard/configs/error.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl; # Managed by Certbot
+    # ssl_certificate /etc/letsencrypt/live/${DASHBOARD_DOMAIN}/fullchain.pem; 
+    # ssl_certificate_key /etc/letsencrypt/live/${DASHBOARD_DOMAIN}/privkey.pem;
+}
+
+server {
+    listen 80;
+    server_name ${DASHBOARD_DOMAIN};
+    return 301 https://$host$request_uri;
+}
