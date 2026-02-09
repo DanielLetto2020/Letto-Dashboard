@@ -59,7 +59,10 @@
                     <span class="text-slate-400">CPU: <span id="stat-cpu" class="text-emerald-400">0%</span></span>
                     <span class="text-slate-400">RAM: <span id="stat-ram" class="text-emerald-400">0%</span></span>
                     <span class="text-slate-400">DISK: <span id="stat-disk" class="text-emerald-400">0%</span></span>
-                    <span class="text-slate-400">AI: <span id="ai-full-status" class="text-emerald-400">0k / 1m (0%)</span></span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400">AI: <span id="ai-full-status" class="text-emerald-400">Loading...</span></span>
+                        <button onclick="updateAiStatus(true)" id="ai-status-refresh" class="text-[10px] text-slate-600 hover:text-emerald-400 transition-all">🩺</button>
+                    </div>
                 </div>
             </nav>
 
