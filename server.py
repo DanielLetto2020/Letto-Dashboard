@@ -19,6 +19,7 @@ from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, read_file_content
 from api.translate import translate_text
+from api.cron import get_cron_jobs
 
 app = FastAPI()
 
@@ -56,7 +57,8 @@ async def get_status(token: str):
         "heartbeat_raw": get_heartbeat_raw(),
         "git": git_info,
         "ai": get_ai_context(),
-        "files": get_workspace_tree()
+        "files": get_workspace_tree(),
+        "cron": get_cron_jobs()
     }
 
 @app.post("/api/heartbeat/update")

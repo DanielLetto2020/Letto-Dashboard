@@ -109,6 +109,16 @@
                     <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
                 </div>
 
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Cron Manager</span>
+                        <div id="cron-count" class="text-[10px] font-bold text-emerald-400">0</div>
+                    </div>
+                    <div id="cron-list" class="px-4 py-1 text-left max-h-48 overflow-y-auto">
+                        <div class="py-4 text-center text-[9px] text-slate-600 italic">No scheduled tasks found</div>
+                    </div>
+                </div>
+
                 <div class="bg-slate-800/20 p-4 rounded-3xl border border-white/5 mb-4 text-left text-[9px] font-bold flex justify-between items-center">
                     <span class="text-slate-500 uppercase tracking-widest">Server Uptime</span>
                     <span id="stat-uptime" class="text-white uppercase tracking-widest">--h --m</span>

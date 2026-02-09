@@ -46,6 +46,31 @@ async function updateStats() {
     
     if (data.files) document.getElementById('files-tree').innerHTML = renderTree(data.files);
     
+    // Cron Manager Update
+    const cronList = document.getElementById('cron-list');
+    const cronCount = document.getElementById('cron-count');
+    if (data.cron) {
+        cronCount.innerText = data.cron.length;
+        if (data.cron.length > 0) {
+            cronList.innerHTML = '';
+            data.cron.forEach(job => {
+                const row = document.createElement('div');
+                row.className = 'row-item py-2 flex flex-col text-left';
+                row.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] text-slate-200 font-bold">${job.name || 'Unnamed Task'}</span>
+                        <span class="text-[7px] text-emerald-500/60 font-mono uppercase">${job.schedule || 'at once'}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[7px] text-slate-500">
+                        <span class="truncate pr-2">${job.payload || 'No payload'}</span>
+                        <span class="font-bold text-slate-700">${job.id.slice(0,8)}</span>
+                    </div>
+                `;
+                cronList.appendChild(row);
+            });
+        }
+    }
+
     const agentsList = document.getElementById('agents-list');
     document.getElementById('stat-agents-count').innerText = data.agents.length;
     agentsList.innerHTML = '';
