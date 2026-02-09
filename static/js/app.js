@@ -230,6 +230,15 @@ async function handleLogin() {
 function logout() { localStorage.removeItem(authKey); location.reload(); }
 
 window.onload = async () => {
+    // Check for Magic Link (?key=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const magicKey = urlParams.get('key');
+    if (magicKey) {
+        localStorage.setItem(authKey, magicKey);
+        // Clean URL without reloading
+        window.history.replaceState({}, document.title, "/");
+    }
+
     const t = localStorage.getItem(authKey);
     if (t) {
         const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: t }) });
