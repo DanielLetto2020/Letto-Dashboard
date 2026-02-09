@@ -25,6 +25,7 @@ from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
 from api.cron import get_cron_jobs
+from api.projects import get_projects_list
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 
 app = FastAPI()
@@ -78,6 +79,11 @@ async def get_status(token: str):
         "cron": get_cron_jobs()
     }
 
+@app.get("/api/projects")
+async def get_projects(token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    return get_projects_list()
+
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
@@ -121,6 +127,7 @@ async def translate(data: TranslateRequest):
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/agents", response_class=HTMLResponse)
+@app.get("/projects", response_class=HTMLResponse)
 @app.get("/git", response_class=HTMLResponse)
 @app.get("/explorer", response_class=HTMLResponse)
 async def index(request: Request):

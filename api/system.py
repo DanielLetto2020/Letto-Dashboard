@@ -3,15 +3,13 @@ import psutil
 import time
 import subprocess
 import json
-import zipfile
-from io import BytesIO
 from api.parser import get_latest_context
 
-# Константы путей
+# Константы путей относительно этого файла
 API_DIR = os.path.dirname(os.path.abspath(__file__))
 DASHBOARD_ROOT = os.path.dirname(API_DIR)
-WORKSPACE_ROOT = os.path.dirname(DASHBOARD_ROOT)
-SYSTEM_ROOT = "/home/max/.openclaw"
+# Воркспейс всегда в одном и том же месте
+WORKSPACE_ROOT = "/home/max/.openclaw/workspace"
 HB_MARKER = os.path.join(WORKSPACE_ROOT, '.heartbeat_last_run')
 
 def get_server_uptime():
@@ -26,6 +24,7 @@ def get_last_hb():
 
 def get_git_info():
     try:
+        # Дашборд теперь в projects/dashboard
         branch = subprocess.check_output(f"git -C {DASHBOARD_ROOT} rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
         output = subprocess.check_output(f"git -C {DASHBOARD_ROOT} log -5 --pretty=format:'%s@@%ar'", shell=True).decode().splitlines()
         commits = [{"msg": l.split("@@")[0], "date": l.split("@@")[1]} for l in output if "@@" in l]
@@ -37,6 +36,8 @@ def get_ai_context():
     return get_latest_context()
 
 def create_backup_zip():
+    import zipfile
+    from io import BytesIO
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         # 1. Добавляем воркспейс
@@ -49,6 +50,7 @@ def create_backup_zip():
                 zf.write(full_path, rel_path)
         
         # 2. Добавляем системные конфиги
+        SYSTEM_ROOT = "/home/max/.openclaw"
         sys_files = [
             'openclaw.json', 'openclaw.json.bak', '.env', 
             'agents/main/sessions/sessions.json'
