@@ -63,13 +63,20 @@ function handleRouting() {
     if(document.getElementById(activeComp)) document.getElementById(activeComp).classList.remove('hidden');
     if(document.getElementById(activeTabId)) document.getElementById(activeTabId).className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
 
+    // Ensure detail view is hidden unless on /projects/<name>
+    const detailView = document.getElementById('project-detail-view-content');
+    if (detailView) detailView.classList.add('hidden');
+
     if (path === '/git') updateGitPage();
     if (path === '/projects') updateProjectsPage();
 
     // Handle /projects/<name> route
     if (path.startsWith('/projects/')) {
         const projectName = path.split('/')[2];
-        showProjectDetails(projectName);
+        if (projectName) {
+            if(document.getElementById('projects-view-content')) document.getElementById('projects-view-content').classList.add('hidden');
+            showProjectDetails(projectName);
+        }
     }
 }
 
