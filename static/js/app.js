@@ -106,16 +106,70 @@ async function showProjectDetails(projectName) {
     const explorerContent = document.getElementById('explorer-view-content');
     [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
 
-    // Ensure the project detail view is visible
+    // Ensure the project detail view container exists
     let projectDetailContent = document.getElementById('project-detail-view-content');
     if (!projectDetailContent) {
         projectDetailContent = document.createElement('div');
         projectDetailContent.id = 'project-detail-view-content';
-        document.getElementById('dashboard-view').appendChild(projectDetailContent); // Append to main dashboard
+        projectDetailContent.className = 'view-content w-full h-full';
+        document.getElementById('dashboard-view').appendChild(projectDetailContent);
     }
     projectDetailContent.classList.remove('hidden');
 
-    projectDetailContent.innerHTML = `<h2>Project: ${projectName}</h2><p>Details for project ${projectName} will go here.</p>`;
+    // Fetch data to get the file tree
+    const data = await api('/api/status');
+    if (!data || !data.files) {
+        projectDetailContent.innerHTML = `<div class="p-8 text-center text-red-500">Error loading project data</div>`;
+        return;
+    }
+
+    // Find the project folder
+    let projectNode = null;
+    const projectsRoot = data.files.find(f => f.name === 'projects' && f.is_dir);
+    if (projectsRoot && projectsRoot.children) {
+        projectNode = projectsRoot.children.find(f => f.name === projectName && f.is_dir);
+    }
+
+    if (!projectNode) {
+        projectDetailContent.innerHTML = `
+            <div class="p-8 text-center">
+                <div class="text-slate-500 mb-4">Project "${projectName}" not found.</div>
+                <button onclick="navigateTo('/projects')" class="btn-primary px-6 py-2">Back to Projects</button>
+            </div>`;
+        return;
+    }
+
+    const downloadUrl = `/api/projects/${projectName}/download?token=${localStorage.getItem(authKey)}`;
+
+    projectDetailContent.innerHTML = `
+        <div class="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-emerald-500 mb-1 cursor-pointer hover:text-emerald-400 text-sm font-mono uppercase tracking-widest" onclick="navigateTo('/projects')">
+                        <span>←</span> back to list
+                    </div>
+                    <h2 class="text-3xl font-black text-white flex items-center gap-3">
+                        ${projectName} <span class="bg-emerald-500 text-slate-900 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-tighter">v${projectNode.version || '1.0'}</span>
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <a href="${downloadUrl}" class="flex-1 sm:flex-none btn-primary bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+                        <span>📥</span> Download ZIP
+                    </a>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div class="bg-slate-800/50 px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 font-mono uppercase tracking-widest">Project Workspace Explorer</span>
+                    <span class="text-[10px] text-slate-600 font-mono italic">${projectName}/</span>
+                </div>
+                <div id="project-files-tree" class="p-4 bg-slate-950/20 min-h-[300px]">
+                    ${renderTree(projectNode.children)}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 window.onpopstate = () => handleRouting();
