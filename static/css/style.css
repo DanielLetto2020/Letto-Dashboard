@@ -1,14 +1,11 @@
 body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 0; }
 .glow-text { text-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
-#desktop-view { display: none; }
-#mobile-view { display: block; }
-@media (min-width: 769px) { #desktop-view { display: flex; } #mobile-view { display: none; } }
 .stat-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(51, 65, 85, 0.5); }
 .row-item { border-bottom: 1px solid rgba(51, 65, 85, 0.2); }
 .ms-text { font-size: 0.7em; opacity: 0.5; margin-left: 1px; }
 .glass { backdrop-blur: xl; background: rgba(15, 23, 42, 0.6); }
 
-/* Полный сброс стилей подсветки, возврат к простому тексту */
+/* Viewer styles */
 #viewer-text {
     display: block;
     white-space: pre;
@@ -17,10 +14,15 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
     font-size: 10px;
     line-height: 1.5;
     text-align: left;
-    color: #cbd5e1; /* slate-300 */
+    color: #cbd5e1;
 }
-pre {
-    margin: 0;
-    padding: 0;
-    background: transparent;
+
+/* Desktop Font Adjustments */
+@media (min-width: 768px) {
+    .stat-card div[id^="stat-"] { font-size: 0.875rem; /* text-sm */ }
+    #viewer-text { font-size: 12px; }
+    #heartbeat-editor { font-size: 12px; }
+    #files-tree { font-size: 12px; }
+    .row-item span { font-size: 11px; }
+    h2.text-xl { font-size: 1.5rem; }
 }
