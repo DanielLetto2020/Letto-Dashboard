@@ -30,7 +30,7 @@
                 <h1 class="text-3xl font-bold text-white tracking-tighter glow-text">Letto 🌿</h1>
                 <div class="flex items-center gap-6">
                     <div id="header-uptime" class="text-[12px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">UPTIME: <span id="stat-uptime" class="text-emerald-400">--h --m</span></div>
-                    <button onclick="logout()" class="text-[12px] text-slate-500 hover:text-red-400/80 uppercase tracking-[0.2em] font-bold transition-all border border-slate-800 px-3 py-1 rounded-lg">Exit</button>
+                    <button onclick="logout()" class="text-[12px] text-slate-500 hover:text-red-400/60 uppercase tracking-[0.2em] font-bold transition-all border border-slate-800 px-3 py-1 rounded-lg">Exit</button>
                 </div>
             </header>
 
@@ -38,12 +38,12 @@
                 <div class="flex justify-between items-center mb-6">
                     <div class="flex gap-8">
                         <button onclick="navigateTo('/')" id="tab-main" class="text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all">Главная</button>
+                        <button onclick="navigateTo('/explorer')" id="tab-explorer" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Файлы</button>
                         <button onclick="navigateTo('/agents')" id="tab-agents" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Агенты</button>
                         <button onclick="navigateTo('/git')" id="tab-git" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Git</button>
                     </div>
                     <div class="flex items-center text-[12px] font-bold uppercase tracking-widest bg-slate-800/40 px-3 py-1 rounded-lg border border-white/5">
                         <span class="text-emerald-500">PULSE</span>
-                        <!-- Toggle Switch -->
                         <div class="mx-3 flex items-center">
                             <label class="relative inline-flex items-center cursor-pointer scale-90">
                                 <input type="checkbox" id="refresh-toggle" class="sr-only peer" onchange="toggleAutoRefresh(this.checked)">
@@ -76,13 +76,12 @@
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
-                        <div class="flex gap-2">
-                            <button onclick="toggleAllDirs(true)" class="text-[7px] text-emerald-500/60 font-bold">EXPAND</button>
-                            <button onclick="toggleAllDirs(false)" class="text-[7px] text-slate-600 font-bold">COLLAPSE</button>
-                        </div>
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Cron Manager</span>
+                        <div id="cron-count" class="text-[10px] font-bold text-emerald-400">0</div>
                     </div>
-                    <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed no-scrollbar"></div>
+                    <div id="cron-list" class="px-4 py-1 text-left max-h-48 overflow-y-auto no-scrollbar">
+                        <div class="py-4 text-center text-[9px] text-slate-600 italic">No scheduled tasks found</div>
+                    </div>
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden">
@@ -92,14 +91,20 @@
                     </div>
                     <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto no-scrollbar"></div>
                 </div>
+            </div>
 
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Cron Manager</span>
-                        <div id="cron-count" class="text-[10px] font-bold text-emerald-400">0</div>
+            <!-- Workspace Explorer Section -->
+            <div id="explorer-view-content" class="hidden flex-1 flex flex-col">
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex-1 flex flex-col">
+                    <div class="bg-white/5 px-6 py-4 flex justify-between items-center border-b border-white/5">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em]">Workspace Explorer</span>
+                        <div class="flex gap-4">
+                            <button onclick="toggleAllDirs(true)" class="text-[10px] text-emerald-500/60 font-bold uppercase">Expand</button>
+                            <button onclick="toggleAllDirs(false)" class="text-[10px] text-slate-600 font-bold uppercase">Collapse</button>
+                        </div>
                     </div>
-                    <div id="cron-list" class="px-4 py-1 text-left max-h-48 overflow-y-auto no-scrollbar">
-                        <div class="py-4 text-center text-[9px] text-slate-600 italic">No scheduled tasks found</div>
+                    <div id="files-tree" class="flex-1 px-6 py-4 text-left overflow-y-auto no-scrollbar text-[14px] font-mono leading-relaxed min-h-[30rem]">
+                        <!-- Динамическое дерево файлов -->
                     </div>
                 </div>
             </div>

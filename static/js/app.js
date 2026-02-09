@@ -32,17 +32,19 @@ function handleRouting() {
     const mainContent = document.getElementById('main-dashboard-content');
     const agentsContent = document.getElementById('agents-view-content');
     const gitContent = document.getElementById('git-view-content');
+    const explorerContent = document.getElementById('explorer-view-content');
     
     const tabMain = document.getElementById('tab-main');
     const tabAgents = document.getElementById('tab-agents');
     const tabGit = document.getElementById('tab-git');
+    const tabExplorer = document.getElementById('tab-explorer');
 
     // Reset visibility
-    if(mainContent) mainContent.classList.add('hidden');
-    if(agentsContent) agentsContent.classList.add('hidden');
-    if(gitContent) gitContent.classList.add('hidden');
+    [mainContent, agentsContent, gitContent, explorerContent].forEach(c => {
+        if(c) c.classList.add('hidden');
+    });
 
-    [tabMain, tabAgents, tabGit].forEach(t => {
+    [tabMain, tabAgents, tabGit, tabExplorer].forEach(t => {
         if(t) t.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all";
     });
 
@@ -53,6 +55,9 @@ function handleRouting() {
         if(gitContent) gitContent.classList.remove('hidden');
         if(tabGit) tabGit.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
         updateGitPage();
+    } else if (path === '/explorer') {
+        if(explorerContent) explorerContent.classList.remove('hidden');
+        if(tabExplorer) tabExplorer.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
     } else {
         if(mainContent) mainContent.classList.remove('hidden');
         if(tabMain) tabMain.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
