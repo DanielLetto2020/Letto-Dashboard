@@ -19,10 +19,14 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 
 /* Desktop Font Adjustments */
 @media (min-width: 768px) {
-    .stat-card div[id^="stat-"] { font-size: 0.875rem; /* text-sm */ }
-    #viewer-text { font-size: 12px; }
-    #heartbeat-editor { font-size: 12px; }
-    #files-tree { font-size: 12px; }
-    .row-item span { font-size: 11px; }
-    h2.text-xl { font-size: 1.5rem; }
+    body { font-size: 16px; }
+    .stat-card div[id^="stat-"] { font-size: 1.25rem; /* text-xl */ }
+    .stat-card div.text-[7px] { font-size: 10px; }
+    #viewer-text { font-size: 14px; }
+    #heartbeat-editor { font-size: 14px; }
+    #files-tree { font-size: 14px; }
+    .row-item span { font-size: 13px; }
+    h2.text-xl { font-size: 2rem; }
+    .stat-card span.text-[8px] { font-size: 11px; }
+    .stat-card span.text-[9px] { font-size: 12px; }
 }
