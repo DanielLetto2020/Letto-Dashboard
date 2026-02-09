@@ -76,7 +76,7 @@
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
                         <span id="git-branch-info" class="text-[7px] text-emerald-500/80 font-mono"></span>
                     </div>
-                    <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto"></div>
+                    <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto no-scrollbar"></div>
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
@@ -84,7 +84,7 @@
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Heartbeat Tasks</span>
                         <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold">Never</div>
                     </div>
-                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none" spellcheck="false"></textarea>
+                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none no-scrollbar" spellcheck="false"></textarea>
                     <div class="px-4 pb-4 flex justify-end">
                         <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
                     </div>
@@ -98,7 +98,7 @@
                             <button onclick="toggleAllDirs(false)" class="text-[7px] text-slate-600 font-bold">COLLAPSE</button>
                         </div>
                     </div>
-                    <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed"></div>
+                    <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed no-scrollbar"></div>
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden">
@@ -106,7 +106,7 @@
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Active Agents</span>
                         <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
                     </div>
-                    <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto"></div>
+                    <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto no-scrollbar"></div>
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
@@ -114,7 +114,7 @@
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Cron Manager</span>
                         <div id="cron-count" class="text-[10px] font-bold text-emerald-400">0</div>
                     </div>
-                    <div id="cron-list" class="px-4 py-1 text-left max-h-48 overflow-y-auto">
+                    <div id="cron-list" class="px-4 py-1 text-left max-h-48 overflow-y-auto no-scrollbar">
                         <div class="py-4 text-center text-[9px] text-slate-600 italic">No scheduled tasks found</div>
                     </div>
                 </div>
