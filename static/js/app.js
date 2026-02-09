@@ -74,7 +74,9 @@ async function updateStats() {
         document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
     }
     
-    lastUpdate = Date.now();
+    if (isManual || (autoRefreshEnabled && (Date.now() - lastUpdate >= UPDATE_MS))) {
+        lastUpdate = Date.now();
+    }
 }
 
 function renderTree(nodes, indent = 0) {
@@ -193,11 +195,20 @@ function updateTimer() {
     
     if (!autoRefreshEnabled) {
         timerEl.parentElement.style.opacity = '0.3';
+        timerEl.innerText = '20'; // Reset display when off
         return;
     }
     timerEl.parentElement.style.opacity = '1';
     
-    const rem = Math.max(0, UPDATE_MS - (Date.now() - lastUpdate));
+    const now = Date.now();
+    const elapsed = now - lastUpdate;
+    
+    if (elapsed >= UPDATE_MS) {
+        updateStats();
+        return;
+    }
+
+    const rem = Math.max(0, UPDATE_MS - elapsed);
     const seconds = Math.floor(rem / 1000);
     const ms = rem % 1000;
     timerEl.innerHTML = `${seconds}<span class="ms-text">.${ms.toString().padStart(3, '0')}</span>`;
@@ -227,7 +238,6 @@ window.onload = async () => {
             document.getElementById('boot-loader').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
             updateStats(true); 
-            setInterval(updateStats, 1000); 
             setInterval(updateTimer, 41);
             return;
         }

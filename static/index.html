@@ -8,17 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="min-h-screen">
-    <div id="desktop-view" class="h-screen flex flex-col items-center justify-center p-10 text-center text-slate-600">
-        <h1 class="text-xl font-bold uppercase tracking-widest text-red-500/80">Mobile Terminal Only</h1>
-    </div>
-
-    <div id="mobile-view" class="min-h-screen flex flex-col p-4 max-w-md mx-auto overflow-x-hidden">
+<body class="min-h-screen bg-slate-900 font-['JetBrains_Mono'] text-slate-300">
+    <div id="main-container" class="min-h-screen flex flex-col p-4 max-w-4xl mx-auto overflow-x-hidden">
         <div id="boot-loader" class="flex-1 flex items-center justify-center">
             <div class="text-emerald-500 animate-pulse text-[10px] tracking-[0.5em]">INITIALIZING...</div>
         </div>
 
-        <div id="login-view" class="hidden flex-1 flex flex-col justify-center py-10">
+        <div id="login-view" class="hidden flex-1 flex flex-col justify-center py-10 max-w-md mx-auto w-full">
             <div class="text-center mb-12">
                 <span class="text-6xl block mb-4">🌿</span>
                 <h1 class="text-4xl font-bold text-emerald-400 glow-text">Letto</h1>
