@@ -1,7 +1,21 @@
-scripts/tokens.json
-scripts/ai_context.json
-dashboard/configs/access.log
-dashboard/configs/error.log
+# Env
+.env
+
+# Data & Tokens
+scripts/*.json
+
+# Logs
+configs/*.log
+access.log
+error.log
+
+# Configs
+configs/*.conf
+
+# Python
 __pycache__/
 *.pyc
+
+# System
 .heartbeat_last_run
+.DS_Store
