@@ -44,7 +44,8 @@ def get_ai_context():
 def get_agents_info():
     agents = []
     try:
-        cmd = "ps -eo pid,cmd | grep -E 'openclaw|node.*index.mjs|python3.*server.py' | grep -v grep"
+        # Используем ww для неограниченной ширины вывода ps
+        cmd = "ps -eoww pid,args | grep -E 'openclaw|node.*index.mjs|python3.*server.py' | grep -v grep"
         output = subprocess.check_output(cmd, shell=True).decode().splitlines()
         for line in output:
             line = line.strip()
@@ -52,11 +53,17 @@ def get_agents_info():
             parts = line.split()
             pid = parts[0]
             cmd_full = " ".join(parts[1:])
+            
             if "server.py" in cmd_full: name = "Letto UI Manager"
             elif "openclaw" in cmd_full and "gateway" in cmd_full: name = "Letto Core Gateway"
             elif "node" in cmd_full and "index.mjs" in cmd_full: name = "Main Session"
-            else: name = "Active Process"
-            agents.append({"pid": pid, "name": name})
+            else: name = "Active Agent"
+            
+            # Избегаем дубликатов по названию (для чистоты UI)
+            if not any(a['name'] == name for a in agents):
+                agents.append({"pid": pid, "name": name})
     except: pass
-    if not agents: agents.append({"pid": str(os.getpid()), "name": "Letto UI Manager (Self)"})
+    
+    if not agents: 
+        agents.append({"pid": str(os.getpid()), "name": "Letto UI Manager (Self)"})
     return agents
