@@ -172,7 +172,7 @@ async function showProjectDetails(projectName) {
                     <span class="text-[10px] text-slate-600 font-mono italic">${projectName}/</span>
                 </div>
                 <div id="project-files-tree" class="p-4 bg-slate-950/20 min-h-[300px]">
-                    ${renderTree(projectNode.children)}
+                    ${renderTree(projectNode.children, 0, 'projects/' + projectName)}
                 </div>
             </div>
         </div>
@@ -313,21 +313,24 @@ async function downloadBackup() {
     setTimeout(() => { btn.innerHTML = '<span>📦</span> <span class="hidden sm:inline">Backup</span>'; }, 3000);
 }
 
-function renderTree(nodes, indent = 0) {
+function renderTree(nodes, indent = 0, currentPath = '') {
     let html = '';
     if(!nodes) return html;
     nodes.forEach(node => {
         const pad = indent * 16;
+        // Fix: Ensure path is correctly determined for detail view
+        const nodePath = node.path || (currentPath ? currentPath + '/' + node.name : node.name);
+        
         if (node.is_dir) {
             html += `<div class="py-1">
                 <div class="flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="toggleDir(this)">
                     <span class="mr-2 text-[10px] folder-arrow rotate-0 transition-transform text-slate-600">▶</span><span class="mr-2">📁</span>
                     <span class="text-emerald-400 font-bold uppercase tracking-tight text-[14px]">${node.name}</span>
                 </div>
-                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1) : ''}</div>
+                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1, nodePath) : ''}</div>
             </div>`;
         } else {
-            const safePath = btoa(node.path);
+            const safePath = btoa(nodePath);
             html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFileSafe('${safePath}')">
                 <span class="mr-2 ml-4">📄</span><span class="text-slate-300 text-[14px]">${node.name}</span>
             </div>`;
