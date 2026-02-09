@@ -5,6 +5,14 @@ from pydantic import BaseModel
 import os
 import psutil
 
+# Простой парсер .env без сторонних библиотек
+if os.path.exists('.env'):
+    with open('.env') as f:
+        for line in f:
+            if '=' in line and not line.startswith('#'):
+                key, value = line.strip().split('=', 1)
+                os.environ[key] = value
+
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
 from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context
