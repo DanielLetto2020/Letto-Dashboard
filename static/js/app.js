@@ -65,6 +65,12 @@ function handleRouting() {
 
     if (path === '/git') updateGitPage();
     if (path === '/projects') updateProjectsPage();
+
+    // Handle /projects/<name> route
+    if (path.startsWith('/projects/')) {
+        const projectName = path.split('/')[2];
+        showProjectDetails(projectName);
+    }
 }
 
 async function updateProjectsPage() {
@@ -87,8 +93,29 @@ async function updateProjectsPage() {
                 Origin: <span class="${p.has_origin ? 'text-emerald-500' : 'text-slate-700'}">${p.has_origin ? 'Connected' : 'Local Only'}</span>
             </div>
         `;
+        card.onclick = () => navigateTo('/projects/' + p.name);
         list.appendChild(card);
     });
+}
+
+async function showProjectDetails(projectName) {
+    // Hide all main content views
+    const mainContent = document.getElementById('main-dashboard-content');
+    const projectsContent = document.getElementById('projects-view-content');
+    const gitContent = document.getElementById('git-view-content');
+    const explorerContent = document.getElementById('explorer-view-content');
+    [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+
+    // Ensure the project detail view is visible
+    let projectDetailContent = document.getElementById('project-detail-view-content');
+    if (!projectDetailContent) {
+        projectDetailContent = document.createElement('div');
+        projectDetailContent.id = 'project-detail-view-content';
+        document.getElementById('dashboard-view').appendChild(projectDetailContent); // Append to main dashboard
+    }
+    projectDetailContent.classList.remove('hidden');
+
+    projectDetailContent.innerHTML = `<h2>Project: ${projectName}</h2><p>Details for project ${projectName} will go here.</p>`;
 }
 
 window.onpopstate = () => handleRouting();
