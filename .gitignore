@@ -12,3 +12,5 @@ __pycache__/
 *.pyc
 .heartbeat_last_run
 .DS_Store
+aider_task_*
+AIDER.md
