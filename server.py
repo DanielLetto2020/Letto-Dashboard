@@ -3,6 +3,8 @@ import psutil
 import time
 import subprocess
 import json
+import zipfile
+import io
 
 # Manual .env parse to ensure it's loaded BEFORE anything else
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -83,6 +85,31 @@ async def get_status(token: str):
 async def get_projects(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
     return get_projects_list()
+
+@app.get("/api/projects/{name}/download")
+async def download_project(name: str, token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    
+    workspace_root = os.path.abspath(os.path.join(DASHBOARD_ROOT, "../.."))
+    project_path = os.path.join(workspace_root, "projects", name)
+    
+    if not os.path.exists(project_path) or not os.path.isdir(project_path):
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(project_path):
+            for file in files:
+                file_full_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_full_path, project_path)
+                zipf.write(file_full_path, arcname)
+    
+    memory_file.seek(0)
+    return StreamingResponse(
+        memory_file,
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": f"attachment; filename={name}.zip"}
+    )
 
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
