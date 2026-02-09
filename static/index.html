@@ -27,86 +27,52 @@
 
         <div id="dashboard-view" class="hidden flex-1 flex flex-col pt-2">
             <header class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-xl font-bold text-white tracking-tighter">Letto 🌿</h2>
-                    <div class="flex items-center text-[8px] font-bold uppercase tracking-widest">
-                        <span class="text-emerald-500/80">PULSE</span>
-                        <span class="text-slate-600 ml-2">NEXT: <span id="sync-timer">20</span>s</span>
-                        <!-- Toggle Switch -->
-                        <div class="ml-3 flex items-center">
-                            <label class="relative inline-flex items-center cursor-pointer scale-75 origin-left">
-                                <input type="checkbox" id="refresh-toggle" class="sr-only peer" onchange="toggleAutoRefresh(this.checked)">
-                                <div class="w-7 h-4 bg-slate-800 border border-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-500 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:bg-emerald-500 peer-checked:bg-emerald-900/30"></div>
-                            </label>
-                        </div>
-                    </div>
+                <h1 class="text-3xl font-bold text-white tracking-tighter glow-text">Letto 🌿</h1>
+                <div class="flex items-center gap-6">
+                    <div id="header-uptime" class="text-[12px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">UPTIME: <span id="stat-uptime" class="text-emerald-400">--h --m</span></div>
+                    <button onclick="updateStats(true)" class="w-8 h-8 bg-slate-800/40 rounded-lg flex items-center justify-center border border-white/5 shadow-xl hover:bg-emerald-900/20 active:scale-95 transition-all text-xs">🔄</button>
+                    <button onclick="logout()" class="text-[12px] text-slate-500 hover:text-red-400/60 uppercase tracking-[0.2em] font-bold transition-all border border-slate-800 px-3 py-1 rounded-lg">Exit</button>
                 </div>
-                <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 shadow-xl" onclick="updateStats(true)">🔄</div>
             </header>
 
+            <nav class="border-b border-white/5 pb-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex gap-8">
+                        <button onclick="navigateTo('/')" id="tab-main" class="text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all">Главная</button>
+                        <button onclick="navigateTo('/explorer')" id="tab-explorer" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Файлы</button>
+                        <button onclick="navigateTo('/agents')" id="tab-agents" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Агенты</button>
+                        <button onclick="navigateTo('/git')" id="tab-git" class="text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all">Git</button>
+                    </div>
+                    <div class="flex items-center text-[12px] font-bold uppercase tracking-widest bg-slate-800/40 px-3 py-1 rounded-lg border border-white/5">
+                        <span class="text-emerald-500">PULSE</span>
+                        <div class="mx-3 flex items-center">
+                            <label class="relative inline-flex items-center cursor-pointer scale-90">
+                                <input type="checkbox" id="refresh-toggle" class="sr-only peer" onchange="toggleAutoRefresh(this.checked)">
+                                <div class="w-7 h-4 bg-slate-700 border border-slate-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:bg-emerald-400 peer-checked:bg-emerald-900/40"></div>
+                            </label>
+                        </div>
+                        <span class="text-slate-300">NEXT: <span id="sync-timer" class="text-emerald-400">20</span>s</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-x-8 gap-y-2 text-[13px] font-mono font-bold uppercase tracking-tight bg-white/5 p-3 rounded-2xl">
+                    <span class="text-slate-400">CPU: <span id="stat-cpu" class="text-emerald-400">0%</span></span>
+                    <span class="text-slate-400">RAM: <span id="stat-ram" class="text-emerald-400">0%</span></span>
+                    <span class="text-slate-400">DISK: <span id="stat-disk" class="text-emerald-400">0%</span></span>
+                    <span class="text-slate-400">AI: <span id="ai-full-status" class="text-emerald-400">0k / 1m (0%)</span></span>
+                </div>
+            </nav>
+
             <div id="main-dashboard-content">
-                <div class="stat-card p-4 rounded-3xl mb-4 grid grid-cols-3 gap-2 text-center">
-                    <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">CPU</div><div id="stat-cpu" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div class="border-x border-white/5"><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">RAM</div><div id="stat-ram" class="text-xs font-bold text-emerald-400">0%</div></div>
-                    <div><div class="text-[7px] text-slate-500 font-bold mb-1 uppercase">DISK</div><div id="stat-disk" class="text-xs font-bold text-emerald-400">0%</div></div>
-                </div>
-
-                <!-- AI Context Block -->
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">AI Context Load</span>
-                        <div class="flex items-center">
-                            <span id="ai-tokens-val" class="text-[9px] text-emerald-400 font-mono font-bold mr-1">0k</span>
-                            <span class="text-[7px] text-slate-600">/ 1.0m</span>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden mb-2">
-                            <div id="ai-context-bar" class="h-full bg-emerald-500 transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.4)]" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-[7px] text-slate-500 uppercase font-bold uppercase">Memory Utilization</span>
-                            <span id="ai-percent-val" class="text-[9px] font-bold text-slate-200">0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden text-left">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
-                        <span id="git-branch-info" class="text-[7px] text-emerald-500/80 font-mono"></span>
-                    </div>
-                    <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto no-scrollbar"></div>
-                </div>
-
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
                     <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
                         <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Heartbeat Tasks</span>
-                        <div id="hb-last-seen" class="text-[7px] text-slate-500 font-bold">Never</div>
+                        <div id="hb-last-seen" class="text-[16px] text-emerald-500 font-bold bg-emerald-900/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">Never</div>
                     </div>
-                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 text-[10px] text-slate-300 focus:outline-none resize-none no-scrollbar" spellcheck="false"></textarea>
+                    <textarea id="heartbeat-editor" class="w-full bg-transparent p-4 min-h-[16rem] text-[10px] text-slate-300 focus:outline-none resize-none no-scrollbar" spellcheck="false"></textarea>
                     <div class="px-4 pb-4 flex justify-end">
                         <button onclick="saveHeartbeat()" class="text-[8px] bg-emerald-600/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold uppercase tracking-widest">Save Tasks</button>
                     </div>
-                </div>
-
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Workspace Explorer</span>
-                        <div class="flex gap-2">
-                            <button onclick="toggleAllDirs(true)" class="text-[7px] text-emerald-500/60 font-bold">EXPAND</button>
-                            <button onclick="toggleAllDirs(false)" class="text-[7px] text-slate-600 font-bold">COLLAPSE</button>
-                        </div>
-                    </div>
-                    <div id="files-tree" class="px-4 py-2 text-left max-h-80 overflow-y-auto text-[10px] font-mono leading-relaxed no-scrollbar"></div>
-                </div>
-
-                <div class="stat-card rounded-3xl mb-4 overflow-hidden">
-                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
-                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Active Agents</span>
-                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
-                    </div>
-                    <div id="agents-list" class="px-4 py-1 text-left max-h-32 overflow-y-auto no-scrollbar"></div>
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col">
@@ -119,30 +85,81 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-800/20 p-4 rounded-3xl border border-white/5 mb-4 text-left text-[9px] font-bold flex justify-between items-center">
-                    <span class="text-slate-500 uppercase tracking-widest">Server Uptime</span>
-                    <span id="stat-uptime" class="text-white uppercase tracking-widest">--h --m</span>
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden">
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Active Agents</span>
+                        <span id="stat-agents-count" class="text-[10px] font-bold text-emerald-400">0</span>
+                    </div>
+                    <div id="agents-list" class="px-4 py-1 text-left min-h-[24rem] overflow-y-auto no-scrollbar"></div>
+                </div>
+            </div>
+
+            <!-- Workspace Explorer Section -->
+            <div id="explorer-view-content" class="hidden flex-1 flex flex-col">
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex-1 flex flex-col">
+                    <div class="bg-white/5 px-6 py-4 flex justify-between items-center border-b border-white/5">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em]">Workspace Explorer</span>
+                        <div class="flex gap-4">
+                            <button onclick="toggleAllDirs(true)" class="text-[10px] text-emerald-500/60 font-bold uppercase">Expand</button>
+                            <button onclick="toggleAllDirs(false)" class="text-[10px] text-slate-600 font-bold uppercase">Collapse</button>
+                        </div>
+                    </div>
+                    <div id="files-tree" class="flex-1 px-6 py-4 text-left overflow-y-auto no-scrollbar text-[14px] font-mono leading-relaxed min-h-[30rem]">
+                        <!-- Динамическое дерево файлов -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="agents-view-content" class="hidden flex-1 flex flex-col pt-4">
+                <div class="bg-slate-800/40 p-8 rounded-[2.5rem] border border-slate-700/50 text-center mb-6">
+                    <span class="text-4xl block mb-4">🏢</span>
+                    <h2 class="text-xl font-bold text-white mb-2">Цифровая Организация</h2>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest leading-relaxed">
+                        Здесь будет структура отделов, распределение воркспейсов и специализированные саб-агенты.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="stat-card p-6 rounded-3xl opacity-40 grayscale pointer-events-none">
+                        <div class="text-[8px] text-emerald-500/60 font-bold uppercase mb-2">Отдел</div>
+                        <div class="text-lg font-bold text-white mb-1">Разработка</div>
+                        <div class="text-[9px] text-slate-500">Автоматизация, CI/CD, Код</div>
+                    </div>
+                    <div class="stat-card p-6 rounded-3xl opacity-40 grayscale pointer-events-none">
+                        <div class="text-[8px] text-emerald-500/60 font-bold uppercase mb-2">Отдел</div>
+                        <div class="text-lg font-bold text-white mb-1">Контент</div>
+                        <div class="text-[9px] text-slate-500">Тексты, Переводы, Документация</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Git History Section -->
+            <div id="git-view-content" class="hidden flex-1 flex flex-col">
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden text-left flex-1 flex flex-col">
+                    <div class="bg-white/5 px-6 py-4 flex justify-between items-center border-b border-white/5">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em]">Git Commits History</span>
+                        <span id="git-page-branch" class="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-900/20 px-3 py-1 rounded-lg border border-emerald-500/30"></span>
+                    </div>
+                    <div id="git-full-list" class="flex-1 px-6 py-4 overflow-y-auto no-scrollbar">
+                        <!-- Сюда будем грузить расширенный список коммитов -->
+                    </div>
                 </div>
             </div>
 
             <div id="file-viewer-content" class="hidden flex-1 flex flex-col">
                 <div class="flex items-center justify-between mb-4">
-                    <button onclick="closeFileViewer()" class="text-[10px] bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold uppercase tracking-widest">← Back</button>
-                    <button id="translate-btn" onclick="toggleTranslation()" class="hidden text-[10px] bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-xl font-bold uppercase tracking-widest">Translate</button>
-                    <div id="viewer-filename" class="text-[10px] text-emerald-400 font-bold font-mono truncate max-w-[40%]">file.py</div>
+                    <button onclick="closeFileViewer()" class="text-[10px] bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold uppercase tracking-widest border border-white/5 shadow-xl active:scale-95 transition-all">← Back</button>
+                    <button id="translate-btn" onclick="toggleTranslation()" class="hidden text-[10px] bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-xl font-bold uppercase tracking-widest border border-emerald-500/30 shadow-xl active:scale-95 transition-all">Translate</button>
+                    <div id="viewer-filename" class="text-[12px] text-emerald-400 font-bold font-mono truncate max-w-[30%]">file.py</div>
                 </div>
-                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 overflow-auto min-h-0">
-                    <pre class="m-0 p-0 text-slate-300 text-[10px] font-mono whitespace-pre text-left" id="viewer-text"></pre>
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-auto min-h-0 no-scrollbar shadow-inner">
+                    <pre class="m-0 p-0 text-slate-300 text-[16px] font-mono whitespace-pre text-left" id="viewer-text"></pre>
                 </div>
                 <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
                     <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1">Prev</button>
                     <span id="page-info" class="text-[9px] text-slate-500">Page 1 of 1</span>
                     <button id="page-next" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1">Next</button>
                 </div>
-            </div>
-
-            <div class="py-4 text-center mt-auto">
-                <button onclick="logout()" class="text-[8px] text-slate-700 uppercase tracking-[0.4em]">Logout</button>
             </div>
         </div>
     </div>

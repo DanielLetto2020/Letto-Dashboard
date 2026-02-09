@@ -1,4 +1,4 @@
-body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 0; }
+body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 0; font-size: 16px; }
 .glow-text { text-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
 .stat-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(51, 65, 85, 0.5); }
 .row-item { border-bottom: 1px solid rgba(51, 65, 85, 0.2); }
@@ -37,22 +37,23 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
     white-space: pre;
     word-wrap: normal;
     overflow-x: auto;
-    font-size: 10px;
+    font-size: 16px;
     line-height: 1.5;
     text-align: left;
     color: #cbd5e1;
 }
 
-/* Desktop Font Adjustments */
+/* Base text elements scale */
+.text-[8px] { font-size: 11px; }
+.text-[9px] { font-size: 13px; }
+.text-[10px] { font-size: 14px; }
+
+/* Desktop Adjustment Override */
 @media (min-width: 768px) {
-    body { font-size: 16px; }
-    .stat-card div[id^="stat-"] { font-size: 1.25rem; /* text-xl */ }
-    .stat-card div.text-[7px] { font-size: 10px; }
-    #viewer-text { font-size: 14px; }
-    #heartbeat-editor { font-size: 14px; }
-    #files-tree { font-size: 14px; }
-    .row-item span { font-size: 13px; }
-    h2.text-xl { font-size: 2rem; }
-    .stat-card span.text-[8px] { font-size: 11px; }
-    .stat-card span.text-[9px] { font-size: 12px; }
+    body { font-size: 18px; }
+    #viewer-text { font-size: 16px; }
+    #heartbeat-editor { font-size: 16px; }
+    #files-tree { font-size: 16px; }
+    .row-item span { font-size: 14px; }
+    h2.text-xl { font-size: 2.2rem; }
 }

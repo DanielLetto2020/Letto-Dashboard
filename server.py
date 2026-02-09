@@ -78,8 +78,11 @@ async def translate(data: TranslateRequest):
     return {"translated": translate_text(data.text)}
 
 @app.get("/", response_class=HTMLResponse)
-async def index():
-    # Отдаем главный HTML из файла
+@app.get("/agents", response_class=HTMLResponse)
+@app.get("/git", response_class=HTMLResponse)
+@app.get("/explorer", response_class=HTMLResponse)
+async def index(request: Request):
+    # Отдаем главный HTML из файла для всех основных маршрутов
     return FileResponse(os.path.join(current_dir, "static/index.html"))
 
 if __name__ == "__main__":
