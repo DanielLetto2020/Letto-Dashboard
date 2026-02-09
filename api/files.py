@@ -8,10 +8,11 @@ def get_workspace_tree(path=None):
     
     tree = []
     try:
+        if not os.path.exists(path): return []
         items = sorted(os.listdir(path))
         for item in items:
-            if item.startswith('.') or item == "__pycache__" or item == "node_modules":
-                continue
+            if item.startswith('.') or item in ["__pycache__", "node_modules"]:
+                if item != ".env": continue # .env в воркспейсе полезен
                 
             full_path = os.path.join(path, item)
             is_dir = os.path.isdir(full_path)
@@ -27,15 +28,39 @@ def get_workspace_tree(path=None):
                     node["children"] = get_workspace_tree(full_path)
                 except:
                     node["children"] = []
-                    
             tree.append(node)
     except Exception as e:
         print(f"Error reading tree: {e}")
-        
     return tree
 
-def read_file_content(rel_path, page=1):
-    full_path = os.path.join(WORKSPACE_ROOT, rel_path)
+def get_system_config_files():
+    base = "/home/max/.openclaw"
+    files = [
+        "openclaw.json",
+        "openclaw.json.bak",
+        "update-check.json",
+        "agents/main/sessions/sessions.json",
+        "agents/main/agent/auth-profiles.json",
+        "telegram/update-offset-default.json"
+    ]
+    result = []
+    for f in files:
+        full_path = os.path.join(base, f)
+        if os.path.exists(full_path):
+            result.append({
+                "name": f,
+                "path": full_path,
+                "is_dir": False
+            })
+    return result
+
+def read_file_content(path, page=1):
+    # Теперь умеем читать и относительные (проект) и абсолютные (система) пути
+    full_path = path if path.startswith("/") else os.path.join(WORKSPACE_ROOT, path)
+    
+    if not full_path.startswith("/home/max/.openclaw"):
+        return {"error": "Access denied"}
+
     if not os.path.exists(full_path) or os.path.isdir(full_path):
         return {"error": "File not found"}
     
@@ -49,7 +74,7 @@ def read_file_content(rel_path, page=1):
             content = f.read(CHUNK_SIZE)
             
         return {
-            "name": os.path.basename(rel_path),
+            "name": os.path.basename(path),
             "content": content,
             "size": file_size,
             "page": page,

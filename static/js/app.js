@@ -99,6 +99,18 @@ async function updateStats() {
     
     if (data.files && document.getElementById('files-tree')) document.getElementById('files-tree').innerHTML = renderTree(data.files);
     
+    if (data.system_configs && document.getElementById('system-configs-list')) {
+        const sysList = document.getElementById('system-configs-list');
+        sysList.innerHTML = '';
+        data.system_configs.forEach(node => {
+            const row = document.createElement('div');
+            row.className = 'py-2 flex items-center active:bg-white/5 rounded px-2 cursor-pointer';
+            row.onclick = () => openFile(node.path);
+            row.innerHTML = `<span class="mr-2">⚙️</span><span class="text-slate-300 text-[14px]">${node.name}</span>`;
+            sysList.appendChild(row);
+        });
+    }
+    
     const agentsList = document.getElementById('agents-list');
     if(agentsList) {
         document.getElementById('stat-agents-count').innerText = data.agents.length;
