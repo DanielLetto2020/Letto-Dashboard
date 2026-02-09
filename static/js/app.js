@@ -359,9 +359,10 @@ async function openFile(path, page = 1) {
     const projectsContent = document.getElementById('projects-view-content');
     const gitContent = document.getElementById('git-view-content');
     const explorerContent = document.getElementById('explorer-view-content');
+    const projectDetailContent = document.getElementById('project-detail-view-content');
     const fileViewer = document.getElementById('file-viewer-content');
 
-    [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+    [mainContent, projectsContent, gitContent, explorerContent, projectDetailContent].forEach(c => { if(c) c.classList.add('hidden'); });
     if(fileViewer) fileViewer.classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     
