@@ -63,8 +63,21 @@ function handleRouting() {
     if(document.getElementById(activeComp)) document.getElementById(activeComp).classList.remove('hidden');
     if(document.getElementById(activeTabId)) document.getElementById(activeTabId).className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
 
+    // Ensure detail view is hidden unless on /projects/<name>
+    const detailView = document.getElementById('project-detail-view-content');
+    if (detailView) detailView.classList.add('hidden');
+
     if (path === '/git') updateGitPage();
     if (path === '/projects') updateProjectsPage();
+
+    // Handle /projects/<name> route
+    if (path.startsWith('/projects/')) {
+        const projectName = path.split('/')[2];
+        if (projectName) {
+            if(document.getElementById('projects-view-content')) document.getElementById('projects-view-content').classList.add('hidden');
+            showProjectDetails(projectName);
+        }
+    }
 }
 
 async function updateProjectsPage() {
@@ -87,8 +100,83 @@ async function updateProjectsPage() {
                 Origin: <span class="${p.has_origin ? 'text-emerald-500' : 'text-slate-700'}">${p.has_origin ? 'Connected' : 'Local Only'}</span>
             </div>
         `;
+        card.onclick = () => navigateTo('/projects/' + p.name);
         list.appendChild(card);
     });
+}
+
+async function showProjectDetails(projectName) {
+    // Hide all main content views
+    const mainContent = document.getElementById('main-dashboard-content');
+    const projectsContent = document.getElementById('projects-view-content');
+    const gitContent = document.getElementById('git-view-content');
+    const explorerContent = document.getElementById('explorer-view-content');
+    [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+
+    // Ensure the project detail view container exists
+    let projectDetailContent = document.getElementById('project-detail-view-content');
+    if (!projectDetailContent) {
+        projectDetailContent = document.createElement('div');
+        projectDetailContent.id = 'project-detail-view-content';
+        projectDetailContent.className = 'view-content w-full h-full';
+        document.getElementById('dashboard-view').appendChild(projectDetailContent);
+    }
+    projectDetailContent.classList.remove('hidden');
+
+    // Fetch data to get the file tree
+    const data = await api('/api/status');
+    if (!data || !data.files) {
+        projectDetailContent.innerHTML = `<div class="p-8 text-center text-red-500">Error loading project data</div>`;
+        return;
+    }
+
+    // Find the project folder
+    let projectNode = null;
+    const projectsRoot = data.files.find(f => f.name === 'projects' && f.is_dir);
+    if (projectsRoot && projectsRoot.children) {
+        projectNode = projectsRoot.children.find(f => f.name === projectName && f.is_dir);
+    }
+
+    if (!projectNode) {
+        projectDetailContent.innerHTML = `
+            <div class="p-8 text-center">
+                <div class="text-slate-500 mb-4">Project "${projectName}" not found.</div>
+                <button onclick="navigateTo('/projects')" class="btn-primary px-6 py-2">Back to Projects</button>
+            </div>`;
+        return;
+    }
+
+    const downloadUrl = `/api/projects/${projectName}/download?token=${localStorage.getItem(authKey)}`;
+
+    projectDetailContent.innerHTML = `
+        <div class="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-emerald-500 mb-1 cursor-pointer hover:text-emerald-400 text-sm font-mono uppercase tracking-widest" onclick="navigateTo('/projects')">
+                        <span>←</span> back to list
+                    </div>
+                    <h2 class="text-3xl font-black text-white flex items-center gap-3">
+                        ${projectName} <span class="bg-emerald-500 text-slate-900 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-tighter">v${projectNode.version || '1.0'}</span>
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <a href="${downloadUrl}" class="flex-1 sm:flex-none btn-primary bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+                        <span>📥</span> Download ZIP
+                    </a>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div class="bg-slate-800/50 px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 font-mono uppercase tracking-widest">Project Workspace Explorer</span>
+                    <span class="text-[10px] text-slate-600 font-mono italic">${projectName}/</span>
+                </div>
+                <div id="project-files-tree" class="p-4 bg-slate-950/20 min-h-[300px]">
+                    ${renderTree(projectNode.children, 0, 'projects/' + projectName)}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 window.onpopstate = () => handleRouting();
@@ -225,21 +313,24 @@ async function downloadBackup() {
     setTimeout(() => { btn.innerHTML = '<span>📦</span> <span class="hidden sm:inline">Backup</span>'; }, 3000);
 }
 
-function renderTree(nodes, indent = 0) {
+function renderTree(nodes, indent = 0, currentPath = '') {
     let html = '';
     if(!nodes) return html;
     nodes.forEach(node => {
         const pad = indent * 16;
+        // Fix: Ensure path is correctly determined for detail view
+        const nodePath = node.path || (currentPath ? currentPath + '/' + node.name : node.name);
+        
         if (node.is_dir) {
             html += `<div class="py-1">
                 <div class="flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="toggleDir(this)">
                     <span class="mr-2 text-[10px] folder-arrow rotate-0 transition-transform text-slate-600">▶</span><span class="mr-2">📁</span>
                     <span class="text-emerald-400 font-bold uppercase tracking-tight text-[14px]">${node.name}</span>
                 </div>
-                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1) : ''}</div>
+                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1, nodePath) : ''}</div>
             </div>`;
         } else {
-            const safePath = btoa(node.path);
+            const safePath = btoa(nodePath);
             html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFileSafe('${safePath}')">
                 <span class="mr-2 ml-4">📄</span><span class="text-slate-300 text-[14px]">${node.name}</span>
             </div>`;
@@ -271,9 +362,10 @@ async function openFile(path, page = 1) {
     const projectsContent = document.getElementById('projects-view-content');
     const gitContent = document.getElementById('git-view-content');
     const explorerContent = document.getElementById('explorer-view-content');
+    const projectDetailContent = document.getElementById('project-detail-view-content');
     const fileViewer = document.getElementById('file-viewer-content');
 
-    [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+    [mainContent, projectsContent, gitContent, explorerContent, projectDetailContent].forEach(c => { if(c) c.classList.add('hidden'); });
     if(fileViewer) fileViewer.classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     
