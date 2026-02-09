@@ -126,7 +126,7 @@ async def spa_fallback(path: str):
     if os.path.exists(static_file) and os.path.isfile(static_file):
         return FileResponse(static_file)
     # Otherwise return SPA index
-    return FileResponse(os.path.join(DASHBOARD_ROOT, "static", index_path))
+    return FileResponse(os.path.join(DASHBOARD_ROOT, "static", "index.html"))
 
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
