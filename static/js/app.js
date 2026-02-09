@@ -260,6 +260,7 @@ window.onload = async () => {
     const magicKey = urlParams.get('key');
     if (magicKey) {
         localStorage.setItem(authKey, magicKey);
+        console.log("Letto Explorer: Magic Key applied from URL");
         // Clean URL without reloading
         window.history.replaceState({}, document.title, "/");
     }
