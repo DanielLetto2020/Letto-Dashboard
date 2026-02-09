@@ -6,39 +6,6 @@ let originalContent = '';
 let translatedContent = '';
 let isTranslated = false;
 
-async function downloadBackup() {
-    const btn = document.getElementById('backup-btn');
-    const originalContent = btn.innerHTML;
-    const token = localStorage.getItem(authKey);
-    
-    btn.innerHTML = '<span>⌛</span> <span>Zipping...</span>';
-    btn.disabled = true;
-    
-    try {
-        const url = `/api/system/backup?token=${token}`;
-        const res = await fetch(url);
-        if (res.ok) {
-            const blob = await res.blob();
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            const dateStr = new Date().toISOString().split('T')[0];
-            link.download = `letto_backup_${dateStr}.zip`;
-            link.click();
-            btn.innerHTML = '<span>✅</span> <span>Done!</span>';
-        } else {
-            btn.innerHTML = '<span>❌</span> <span>Error</span>';
-        }
-    } catch (e) {
-        console.error("Backup error:", e);
-        btn.innerHTML = '<span>❌</span> <span>Error</span>';
-    }
-    
-    setTimeout(() => {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }, 5000);
-}
-
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
     const options = { method, headers: { 'Content-Type': 'application/json' } };
@@ -65,14 +32,14 @@ function handleRouting() {
     const components = {
         '/': 'main-dashboard-content',
         '/explorer': 'explorer-view-content',
-        '/agents': 'agents-view-content',
+        '/projects': 'projects-view-content',
         '/git': 'git-view-content'
     };
 
     const tabs = {
         '/': 'tab-main',
         '/explorer': 'tab-explorer',
-        '/agents': 'tab-agents',
+        '/projects': 'tab-projects',
         '/git': 'tab-git'
     };
 
@@ -90,12 +57,126 @@ function handleRouting() {
 
     // Show active
     const activeComp = components[path] || components['/'];
-    const activeTab = tabs[path] || tabs['/'];
+    let activeTabId = tabs[path] || tabs['/'];
+    if (!document.getElementById(activeTabId)) activeTabId = 'tab-main';
     
     if(document.getElementById(activeComp)) document.getElementById(activeComp).classList.remove('hidden');
-    if(document.getElementById(activeTab)) document.getElementById(activeTab).className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
+    if(document.getElementById(activeTabId)) document.getElementById(activeTabId).className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
+
+    // Ensure detail view is hidden unless on /projects/<name>
+    const detailView = document.getElementById('project-detail-view-content');
+    if (detailView) detailView.classList.add('hidden');
 
     if (path === '/git') updateGitPage();
+    if (path === '/projects') updateProjectsPage();
+
+    // Handle /projects/<name> route
+    if (path.startsWith('/projects/')) {
+        const projectName = path.split('/')[2];
+        if (projectName) {
+            if(document.getElementById('projects-view-content')) document.getElementById('projects-view-content').classList.add('hidden');
+            showProjectDetails(projectName);
+        }
+    }
+}
+
+async function updateProjectsPage() {
+    const data = await api('/api/projects');
+    if (!data) return;
+    const list = document.getElementById('projects-list');
+    if(!list) return;
+    list.innerHTML = '';
+    data.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'stat-card p-6 rounded-3xl flex flex-col gap-3 scale-in';
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <span class="text-xl font-bold text-white">${p.name}</span>
+                <span class="text-[10px] ${p.has_git ? 'text-emerald-400 bg-emerald-400/10 shadow-[0_0_10px_rgba(52,211,153,0.1)]' : 'text-slate-600 bg-white/5'} px-2 py-1 rounded-lg font-mono uppercase">
+                    ${p.has_git ? 'GIT ACTIVE' : 'NO GIT'}
+                </span>
+            </div>
+            <div class="text-[11px] text-slate-500 uppercase tracking-widest">
+                Origin: <span class="${p.has_origin ? 'text-emerald-500' : 'text-slate-700'}">${p.has_origin ? 'Connected' : 'Local Only'}</span>
+            </div>
+        `;
+        card.onclick = () => navigateTo('/projects/' + p.name);
+        list.appendChild(card);
+    });
+}
+
+async function showProjectDetails(projectName) {
+    // Hide all main content views
+    const mainContent = document.getElementById('main-dashboard-content');
+    const projectsContent = document.getElementById('projects-view-content');
+    const gitContent = document.getElementById('git-view-content');
+    const explorerContent = document.getElementById('explorer-view-content');
+    [mainContent, projectsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+
+    // Ensure the project detail view container exists
+    let projectDetailContent = document.getElementById('project-detail-view-content');
+    if (!projectDetailContent) {
+        projectDetailContent = document.createElement('div');
+        projectDetailContent.id = 'project-detail-view-content';
+        projectDetailContent.className = 'view-content w-full h-full';
+        document.getElementById('dashboard-view').appendChild(projectDetailContent);
+    }
+    projectDetailContent.classList.remove('hidden');
+
+    // Fetch data to get the file tree
+    const data = await api('/api/status');
+    if (!data || !data.files) {
+        projectDetailContent.innerHTML = `<div class="p-8 text-center text-red-500">Error loading project data</div>`;
+        return;
+    }
+
+    // Find the project folder
+    let projectNode = null;
+    const projectsRoot = data.files.find(f => f.name === 'projects' && f.is_dir);
+    if (projectsRoot && projectsRoot.children) {
+        projectNode = projectsRoot.children.find(f => f.name === projectName && f.is_dir);
+    }
+
+    if (!projectNode) {
+        projectDetailContent.innerHTML = `
+            <div class="p-8 text-center">
+                <div class="text-slate-500 mb-4">Project "${projectName}" not found.</div>
+                <button onclick="navigateTo('/projects')" class="btn-primary px-6 py-2">Back to Projects</button>
+            </div>`;
+        return;
+    }
+
+    const downloadUrl = `/api/projects/${projectName}/download?token=${localStorage.getItem(authKey)}`;
+
+    projectDetailContent.innerHTML = `
+        <div class="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <div class="flex items-center gap-2 text-emerald-500 mb-1 cursor-pointer hover:text-emerald-400 text-sm font-mono uppercase tracking-widest" onclick="navigateTo('/projects')">
+                        <span>←</span> back to list
+                    </div>
+                    <h2 class="text-3xl font-black text-white flex items-center gap-3">
+                        ${projectName} <span class="bg-emerald-500 text-slate-900 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-tighter">v${projectNode.version || '1.0'}</span>
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <a href="${downloadUrl}" class="flex-1 sm:flex-none btn-primary bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+                        <span>📥</span> Download ZIP
+                    </a>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div class="bg-slate-800/50 px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400 font-mono uppercase tracking-widest">Project Workspace Explorer</span>
+                    <span class="text-[10px] text-slate-600 font-mono italic">${projectName}/</span>
+                </div>
+                <div id="project-files-tree" class="p-4 bg-slate-950/20 min-h-[300px]">
+                    ${renderTree(projectNode.children, 0, 'projects/' + projectName)}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 window.onpopstate = () => handleRouting();
@@ -121,7 +202,7 @@ async function updateStats() {
     const data = await api('/api/status');
     if (!data) return;
     
-    // Header Stats (Fast)
+    // Header Stats
     if(document.getElementById('stat-cpu')) document.getElementById('stat-cpu').innerText = Math.round(data.cpu) + '%';
     if(document.getElementById('stat-ram')) document.getElementById('stat-ram').innerText = Math.round(data.ram) + '%';
     if(document.getElementById('stat-disk')) document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
@@ -143,7 +224,7 @@ async function updateStats() {
             sysList.appendChild(row);
         });
     }
-    
+
     const agentsList = document.getElementById('agents-list');
     if(agentsList) {
         document.getElementById('stat-agents-count').innerText = data.agents.length;
@@ -183,27 +264,27 @@ async function updateStats() {
     
     if (isManual || (autoRefreshEnabled && (Date.now() - lastUpdate >= UPDATE_MS))) {
         lastUpdate = Date.now();
-        updateAiStatus(false); // Background update
+        updateAiStatus(false);
     }
 }
 
 async function updateAiStatus(isLive) {
     const statusEl = document.getElementById('ai-full-status');
     const btn = document.getElementById('ai-status-refresh');
+    if(!statusEl || !btn) return;
     
     if(isLive) { 
         statusEl.classList.add('animate-pulse');
         btn.innerText = '⌛';
     }
 
-    // Attempt cache first on initial load, then live
     const endpoint = isLive ? '/api/ai_status_live' : '/api/ai_status_cached';
     const data = await api(endpoint);
 
     if (data && !data.error) {
         const usedK = (data.used / 1000).toFixed(1);
         const modelStr = data.model ? ` [${data.model}]` : '';
-        const timeStr = data.timestamp ? ` (as of ${new Date(data.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})` : '';
+        const timeStr = data.timestamp ? ` (${new Date(data.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})` : '';
         statusEl.innerText = `${usedK}k/1m(${data.percent}%)${modelStr}`;
         statusEl.title = "Last update: " + timeStr;
     }
@@ -214,20 +295,43 @@ async function updateAiStatus(isLive) {
     }
 }
 
-function renderTree(nodes, indent = 0) {
+async function downloadBackup() {
+    const btn = document.getElementById('backup-btn');
+    const token = localStorage.getItem(authKey);
+    btn.innerText = '⌛...';
+    try {
+        const res = await fetch(`/api/system/backup?token=${token}`);
+        if (res.ok) {
+            const blob = await res.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `letto_backup_${new Date().toISOString().split('T')[0]}.zip`;
+            link.click();
+            btn.innerText = '✅ OK';
+        }
+    } catch (e) { btn.innerText = '❌ Error'; }
+    setTimeout(() => { btn.innerHTML = '<span>📦</span> <span class="hidden sm:inline">Backup</span>'; }, 3000);
+}
+
+function renderTree(nodes, indent = 0, currentPath = '') {
     let html = '';
+    if(!nodes) return html;
     nodes.forEach(node => {
         const pad = indent * 16;
+        // Fix: Ensure path is correctly determined for detail view
+        const nodePath = node.path || (currentPath ? currentPath + '/' + node.name : node.name);
+        
         if (node.is_dir) {
             html += `<div class="py-1">
                 <div class="flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="toggleDir(this)">
                     <span class="mr-2 text-[10px] folder-arrow rotate-0 transition-transform text-slate-600">▶</span><span class="mr-2">📁</span>
                     <span class="text-emerald-400 font-bold uppercase tracking-tight text-[14px]">${node.name}</span>
                 </div>
-                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1) : ''}</div>
+                <div class="dir-children hidden">${node.children ? renderTree(node.children, indent + 1, nodePath) : ''}</div>
             </div>`;
         } else {
-            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFile('${node.path.replace(/'/g, "\\'")}')">
+            const safePath = btoa(nodePath);
+            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFileSafe('${safePath}')">
                 <span class="mr-2 ml-4">📄</span><span class="text-slate-300 text-[14px]">${node.name}</span>
             </div>`;
         }
@@ -235,49 +339,50 @@ function renderTree(nodes, indent = 0) {
     return html;
 }
 
+function openFileSafe(encodedPath) {
+    openFile(atob(encodedPath));
+}
+
 function toggleDir(el) {
     const children = el.nextElementSibling;
     const arrow = el.querySelector('.folder-arrow');
-    const isHidden = children.classList.contains('hidden');
     children.classList.toggle('hidden');
-    arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+    if (arrow) arrow.style.transform = children.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
-function toggleAllDirs(exp) {
-    document.querySelectorAll('.dir-children').forEach(c => c.classList.toggle('hidden', !exp));
-    document.querySelectorAll('.folder-arrow').forEach(a => a.style.transform = exp ? 'rotate(90deg)' : 'rotate(0deg)');
+function toggleAllDirs(exp, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.dir-children').forEach(c => c.classList.toggle('hidden', !exp));
+    container.querySelectorAll('.folder-arrow').forEach(a => a.style.transform = exp ? 'rotate(90deg)' : 'rotate(0deg)');
 }
 
 async function openFile(path, page = 1) {
     const mainContent = document.getElementById('main-dashboard-content');
-    const agentsContent = document.getElementById('agents-view-content');
+    const projectsContent = document.getElementById('projects-view-content');
     const gitContent = document.getElementById('git-view-content');
     const explorerContent = document.getElementById('explorer-view-content');
+    const projectDetailContent = document.getElementById('project-detail-view-content');
     const fileViewer = document.getElementById('file-viewer-content');
 
-    [mainContent, agentsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
-    fileViewer.classList.remove('hidden');
+    [mainContent, projectsContent, gitContent, explorerContent, projectDetailContent].forEach(c => { if(c) c.classList.add('hidden'); });
+    if(fileViewer) fileViewer.classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     
-    const codeEl = document.getElementById('viewer-text');
-    codeEl.innerText = 'Loading...';
+    document.getElementById('viewer-text').innerText = 'Loading...';
     
     const translateBtn = document.getElementById('translate-btn');
-    translateBtn.classList.add('hidden');
-    isTranslated = false;
-    translateBtn.innerText = 'Translate';
+    if(translateBtn) { translateBtn.classList.add('hidden'); isTranslated = false; }
 
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
-    if (!data || data.error) { codeEl.innerText = data ? data.error : 'Connection error'; return; }
+    if (!data || data.error) { document.getElementById('viewer-text').innerText = data ? data.error : 'Error'; return; }
     
     originalContent = data.content;
     translatedContent = '';
-    codeEl.innerText = originalContent;
+    document.getElementById('viewer-text').innerText = originalContent;
 
     const ext = path.split('.').pop().toLowerCase();
-    if (ext === 'md' || ext === 'txt') {
-        translateBtn.classList.remove('hidden');
-    }
+    if ((ext === 'md' || ext === 'txt') && translateBtn) translateBtn.classList.remove('hidden');
 }
 
 function closeFileViewer() {
@@ -288,7 +393,6 @@ function closeFileViewer() {
 async function toggleTranslation() {
     const btn = document.getElementById('translate-btn');
     const codeEl = document.getElementById('viewer-text');
-    
     if (isTranslated) {
         codeEl.innerText = originalContent;
         btn.innerText = 'Translate';
@@ -297,13 +401,8 @@ async function toggleTranslation() {
         if (!translatedContent) {
             btn.innerText = 'Translating...';
             const res = await api('/api/translate', 'POST', { text: originalContent });
-            if (res && res.translated) {
-                translatedContent = res.translated;
-            } else {
-                alert('Translation failed. Check backend logs.');
-                btn.innerText = 'Translate';
-                return;
-            }
+            if (res && res.translated) translatedContent = res.translated;
+            else { btn.innerText = 'Error'; return; }
         }
         codeEl.innerText = translatedContent;
         btn.innerText = 'Original';
@@ -352,7 +451,6 @@ async function handleLogin() {
 function logout() { localStorage.removeItem(authKey); location.reload(); }
 
 window.onload = async () => {
-    // Check for Magic Link (?key=...)
     const urlParams = new URLSearchParams(window.location.search);
     const magicKey = urlParams.get('key');
     if (magicKey) {
@@ -368,7 +466,7 @@ window.onload = async () => {
             document.getElementById('dashboard-view').classList.remove('hidden');
             handleRouting();
             updateStats(true); 
-            updateAiStatus(false); // Background cached update
+            updateAiStatus(false);
             setInterval(updateTimer, 41);
             return;
         }

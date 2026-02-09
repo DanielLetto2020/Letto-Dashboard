@@ -1,6 +1,9 @@
 import os
 
-WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Путь к воркспейсу теперь на один уровень выше, так как дашборд переехал в projects/
+WORKSPACE_ROOT = "/home/max/.openclaw/workspace"
+# Корень дашборда для относительных путей внутри него
+DASHBOARD_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def get_workspace_tree(path=None):
     if path is None:
@@ -11,8 +14,8 @@ def get_workspace_tree(path=None):
         if not os.path.exists(path): return []
         items = sorted(os.listdir(path))
         for item in items:
-            if item.startswith('.') or item in ["__pycache__", "node_modules"]:
-                if item != ".env": continue # .env в воркспейсе полезен
+            if item.startswith('.') and item != ".env": continue
+            if item in ["__pycache__", "node_modules"]: continue
                 
             full_path = os.path.join(path, item)
             is_dir = os.path.isdir(full_path)
@@ -25,12 +28,15 @@ def get_workspace_tree(path=None):
             
             if is_dir:
                 try:
+                    # Ограничиваем рекурсию для стабильности
                     node["children"] = get_workspace_tree(full_path)
                 except:
                     node["children"] = []
+                    
             tree.append(node)
     except Exception as e:
         print(f"Error reading tree: {e}")
+        
     return tree
 
 def get_system_config_files():
@@ -55,16 +61,15 @@ def get_system_config_files():
     return result
 
 def read_file_content(path, page=1):
-    # Теперь умеем читать и относительные (проект) и абсолютные (система) пути
-    full_path = path if path.startswith("/") else os.path.join(WORKSPACE_ROOT, path)
+    # Пытаемся понять, это абсолютный путь (система) или относительный (воркспейс)
+    if path.startswith("/home/max/.openclaw"):
+        full_path = path
+    else:
+        full_path = os.path.join(WORKSPACE_ROOT, path)
     
-    if not full_path.startswith("/home/max/.openclaw"):
-        return {"error": "Access denied"}
-
     if not os.path.exists(full_path) or os.path.isdir(full_path):
         return {"error": "File not found"}
     
-    # 1MB limit per chunk
     CHUNK_SIZE = 1024 * 1024 
     file_size = os.path.getsize(full_path)
     
@@ -74,7 +79,7 @@ def read_file_content(path, page=1):
             content = f.read(CHUNK_SIZE)
             
         return {
-            "name": os.path.basename(path),
+            "name": os.path.basename(full_path),
             "content": content,
             "size": file_size,
             "page": page,

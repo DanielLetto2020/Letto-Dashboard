@@ -3,6 +3,8 @@ import psutil
 import time
 import subprocess
 import json
+import zipfile
+import io
 
 # Manual .env parse to ensure it's loaded BEFORE anything else
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -25,6 +27,7 @@ from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
 from api.cron import get_cron_jobs
+from api.projects import get_projects_list
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 
 app = FastAPI()
@@ -78,6 +81,40 @@ async def get_status(token: str):
         "cron": get_cron_jobs()
     }
 
+@app.get("/api/projects")
+async def get_projects(token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    return get_projects_list()
+
+@app.get("/api/projects/{name}/download")
+async def download_project(name: str, token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    
+    workspace_root = os.path.abspath(os.path.join(DASHBOARD_ROOT, "../.."))
+    project_path = os.path.join(workspace_root, "projects", name)
+    
+    project_path = os.path.abspath(project_path) # Normalize the path
+    if not project_path.startswith(os.path.abspath(os.path.join(workspace_root, "projects"))):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not os.path.exists(project_path) or not os.path.isdir(project_path):
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(project_path):
+            for file in files:
+                file_full_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_full_path, project_path)
+                zipf.write(file_full_path, arcname)
+    
+    memory_file.seek(0)
+    return StreamingResponse(
+        memory_file,
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": f"attachment; filename={name}.zip"}
+    )
+
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
@@ -110,7 +147,7 @@ async def update_heartbeat(data: HeartbeatUpdate):
     return {"success": True}
 
 @app.get("/api/files/read")
-async def get_file(path: str, page: int = 1, token: str = None):
+async def get_file(path: str, token: str, page: int = 1):
     if not verify_token(token): raise HTTPException(status_code=401)
     return read_file_content(path, page)
 
@@ -119,8 +156,22 @@ async def translate(data: TranslateRequest):
     if not verify_token(data.token): raise HTTPException(status_code=401)
     return {"translated": translate_text(data.text)}
 
+# SPA Routing: Fallback for all other routes to index.html
+@app.get("/{path:path}")
+async def spa_fallback(path: str):
+    # If path starts with api/, it's a real 404
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    # Check if file exists in static (e.g. css/style.css)
+    static_file = os.path.join(DASHBOARD_ROOT, "static", path)
+    if os.path.exists(static_file) and os.path.isfile(static_file):
+        return FileResponse(static_file)
+    # Otherwise return SPA index
+    return FileResponse(os.path.join(DASHBOARD_ROOT, "static", "index.html"))
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/agents", response_class=HTMLResponse)
+@app.get("/projects", response_class=HTMLResponse)
 @app.get("/git", response_class=HTMLResponse)
 @app.get("/explorer", response_class=HTMLResponse)
 async def index(request: Request):

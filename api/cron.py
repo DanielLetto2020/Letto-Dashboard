@@ -1,19 +1,22 @@
 import os
 import json
-import subprocess
-import time
 
 def get_cron_jobs():
     try:
-        # Мы знаем, что у нас есть задача для Максима. 
-        # Убираем кэш, возвращаем данные напрямую
-        return [
-            {
-                "id": "8dfbcfa0", 
-                "name": "Morning Briefing: Weather & Finance",
-                "schedule": "50 9 * * *",
-                "payload": "Weather (Reutov), USD/EUR/BTC Rates"
-            }
-        ]
-    except:
-        return []
+        cron_path = "/home/max/.openclaw/cron/jobs.json"
+        if os.path.exists(cron_path):
+            with open(cron_path, 'r') as f:
+                data = json.load(f)
+                jobs = data.get("jobs", [])
+                result = []
+                for job in jobs:
+                    result.append({
+                        "id": job.get("id", "unk")[:8],
+                        "name": job.get("name", "Unnamed"),
+                        "schedule": job.get("schedule", {}).get("expr", "at once"),
+                        "payload": str(job.get("payload", {}).get("message", "Agent Turn"))
+                    })
+                return result
+    except Exception as e:
+        print(f"Cron parse error: {e}")
+    return []
