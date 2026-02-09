@@ -186,14 +186,55 @@ async function openFile(path, page = 1) {
     document.getElementById('main-dashboard-content').classList.add('hidden');
     document.getElementById('agents-view-content').classList.add('hidden');
     document.getElementById('git-view-content').classList.add('hidden');
+    document.getElementById('explorer-view-content').classList.add('hidden');
     document.getElementById('file-viewer-content').classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
+    
     const codeEl = document.getElementById('viewer-text');
     codeEl.innerText = 'Loading...';
+    
+    const translateBtn = document.getElementById('translate-btn');
+    translateBtn.classList.add('hidden');
+    isTranslated = false;
+    translateBtn.innerText = 'Translate';
+
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
     if (!data || data.error) { codeEl.innerText = data ? data.error : 'Connection error'; return; }
+    
     originalContent = data.content;
+    translatedContent = '';
     codeEl.innerText = originalContent;
+
+    const ext = path.split('.').pop().toLowerCase();
+    if (ext === 'md' || ext === 'txt') {
+        translateBtn.classList.remove('hidden');
+    }
+}
+
+async function toggleTranslation() {
+    const btn = document.getElementById('translate-btn');
+    const codeEl = document.getElementById('viewer-text');
+    
+    if (isTranslated) {
+        codeEl.innerText = originalContent;
+        btn.innerText = 'Translate';
+        isTranslated = false;
+    } else {
+        if (!translatedContent) {
+            btn.innerText = 'Translating...';
+            const res = await api('/api/translate', 'POST', { text: originalContent });
+            if (res && res.translated) {
+                translatedContent = res.translated;
+            } else {
+                alert('Translation failed. Check backend logs.');
+                btn.innerText = 'Translate';
+                return;
+            }
+        }
+        codeEl.innerText = translatedContent;
+        btn.innerText = 'Original';
+        isTranslated = true;
+    }
 }
 
 function closeFileViewer() {
