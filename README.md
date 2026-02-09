@@ -1,49 +1,49 @@
 # Letto Dashboard 🌿
 
-Modular control panel for OpenClaw ecosystems. Optimized for mobile and desktop screens.
+Модульная панель управления для экосистем OpenClaw. Оптимизирована для мобильных и десктопных экранов.
 
-## Features
-- **Adaptive Design:** Dark tech style, JetBrains Mono font.
-- **System Monitoring:** CPU, RAM, Disk, Uptime.
-- **AI Context Load:** Visual representation of token usage.
-- **Git Integration:** Real-time commit history and branch info.
-- **Workspace Explorer:** Browse and read workspace files.
-- **Heartbeat Manager:** Edit and sync heartbeat tasks.
-- **Multi-Agent Tracking:** List active OpenClaw processes.
+## Особенности
+- **Адаптивный дизайн:** Стиль "Dark Tech", шрифт JetBrains Mono.
+- **Мониторинг системы:** CPU, RAM, Disk, Uptime.
+- **AI Context Load:** Визуализация использования контекстного окна (токенов).
+- **Интеграция с Git:** История последних коммитов и информация о текущей ветке в реальном времени.
+- **Workspace Explorer:** Просмотр и чтение файлов рабочего пространства.
+- **Менеджер Heartbeat:** Редактирование и синхронизация задач для фоновых проверок.
+- **Трекинг агентов:** Список активных процессов OpenClaw.
 
-## Installation for OpenClaw
+## Инструкция по установке
 
-### 1. Requirements
+### 1. Требования
 - Python 3.10+
-- `pip install fastapi uvicorn psutil pydantic`
-- Running [OpenClaw](https://github.com/openclaw/openclaw) instance.
+- Библиотеки: `pip install fastapi uvicorn psutil pydantic`
+- Работающий экземпляр [OpenClaw](https://github.com/openclaw/openclaw).
 
-### 2. Setup (for Human & AI)
-If you are an AI assistant or a human setting this up on a new server:
+### 2. Быстрый старт (для человека и ИИ)
+Если вы ИИ-ассистент или человек, настраивающий дашборд на новом сервере:
 
-1. **Clone the repo** into your OpenClaw workspace:
+1. **Клонируйте репозиторий** в рабочую директорию OpenClaw:
    ```bash
    git clone https://github.com/DanielLetto2020/Letto-Dashboard.git dashboard
    ```
-2. **Configure Auth:**
-   Create `dashboard/scripts/tokens.json` (it's ignored by git):
+2. **Настройте авторизацию:**
+   Создайте файл `dashboard/scripts/tokens.json` (он игнорируется гитом):
    ```json
    {
-     "token": "654321",
+     "token": "449210",
      "created_at": "2026-02-09T00:00:00",
      "expires_at": 1770681600
    }
    ```
-3. **Run the Manager:**
+3. **Запустите менеджер:**
    ```bash
    python3 dashboard/server.py
    ```
-   *Dashboard will be available at `http://127.0.0.1:3000`*
+   *Дашборд будет доступен по адресу `http://127.0.0.1:3000`*
 
-## Technical Structure
-- `/api`: Modular Python logic (auth, files, system, heartbeat).
-- `/static`: Frontend assets (HTML, Tailwind CSS, Vanilla JS).
-- `/scripts`: Local data storage (tokens, AI context).
+## Техническая структура
+- `/api`: Модульная логика на Python (авторизация, файлы, система, heartbeat).
+- `/static`: Фронтенд (HTML, Tailwind CSS, Vanilla JS).
+- `/scripts`: Локальное хранилище данных (токены, контекст AI).
 
 ---
-*Created by Letto (IT-Friend & Ecosystem Director)* 🌿
+*Создано Letto (IT-друг и Директор экосистемы)* 🌿
