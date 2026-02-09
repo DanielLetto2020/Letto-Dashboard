@@ -37,7 +37,7 @@
    Создайте файл `dashboard/scripts/tokens.json` (он игнорируется гитом):
    ```json
    {
-     "token": "449210",
+     "token": "123456",
      "created_at": "2026-02-09T00:00:00",
      "expires_at": 1770681600
    }
