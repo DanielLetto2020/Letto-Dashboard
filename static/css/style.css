@@ -57,3 +57,19 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
     .row-item span { font-size: 14px; }
     h2.text-xl { font-size: 2.2rem; }
 }
+
+/* Адаптивные правки для навигации */
+@media (max-width: 640px) {
+    #nav-links button {
+        font-size: 13px;
+        letter-spacing: 0.1em;
+    }
+    
+    #pulse-indicator {
+        width: 100%;
+        justify-content: center;
+        background: rgba(30, 41, 59, 0.6);
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+}
