@@ -58,9 +58,8 @@ async function updateStats() {
 
     const cl = document.getElementById('commits-list');
     const gitInfo = data.git || { branch: 'unknown', commits: [] };
-    const gitTitle = document.querySelector('#commits-list').previousElementSibling;
-    gitTitle.innerHTML = `<span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest text-left">Git History</span>
-                          <span class="text-[7px] text-emerald-500/80 font-mono ml-2">[${gitInfo.branch}]</span>`;
+    const branchInfo = document.getElementById('git-branch-info');
+    if (branchInfo) branchInfo.innerText = `[${gitInfo.branch}]`;
 
     cl.innerHTML = '';
     gitInfo.commits.forEach(c => {

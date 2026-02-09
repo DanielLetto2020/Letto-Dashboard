@@ -24,8 +24,9 @@ def get_last_hb():
 def get_git_info():
     try:
         branch = subprocess.check_output(f"git -C {DASHBOARD_ROOT} rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
-        output = subprocess.check_output(f"git -C {DASHBOARD_ROOT} log -5 --pretty=format:'%s|%ar'", shell=True).decode().splitlines()
-        commits = [{"msg": l.split("|")[0], "date": l.split("|")[1]} for l in output if "|" in l]
+        # Используем уникальный разделитель @@ для надежности
+        output = subprocess.check_output(f"git -C {DASHBOARD_ROOT} log -5 --pretty=format:'%s@@%ar'", shell=True).decode().splitlines()
+        commits = [{"msg": l.split("@@")[0], "date": l.split("@@")[1]} for l in output if "@@" in l]
         return {"branch": branch, "commits": commits}
     except: 
         return {"branch": "unknown", "commits": []}

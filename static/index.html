@@ -72,7 +72,10 @@
                 </div>
 
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden text-left">
-                    <div class="bg-white/5 px-4 py-2"><span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span></div>
+                    <div class="bg-white/5 px-4 py-2 flex justify-between items-center">
+                        <span class="text-[8px] text-slate-400 uppercase font-bold tracking-widest">Git History</span>
+                        <span id="git-branch-info" class="text-[7px] text-emerald-500/80 font-mono"></span>
+                    </div>
                     <div id="commits-list" class="px-4 py-1 max-h-32 overflow-y-auto"></div>
                 </div>
 
