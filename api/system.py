@@ -3,6 +3,7 @@ import psutil
 import time
 import subprocess
 import json
+from api.parser import get_latest_context
 
 # Константы путей
 API_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,41 +33,9 @@ def get_git_info():
         return {"branch": "unknown", "commits": []}
 
 def get_ai_context():
-    try:
-        # Указываем путь к транскрипту текущей сессии для парсинга реального статуса
-        session_file = "/home/max/.openclaw/agents/main/sessions/78c27a90-1285-4832-85ae-30cc64fa74db.jsonl"
-        if os.path.exists(session_file):
-            # Читаем последние 2000 символов файла (этого хватит для последних сообщений)
-            with open(session_file, "rb") as f:
-                f.seek(0, os.SEEK_END)
-                chunk = f.read(min(f.tell(), 5000)).decode('utf-8', errors='ignore')
-                
-                # Ищем последнюю запись с Context: X/Y (Z%) или tokens usage
-                import re
-                # Пробуем найти Context в системных сообщениях OpenClaw
-                matches = re.findall(r"Context:\s*([\d\.]+[km]?)\s*/\s*([\d\.]+[km]?)\s*\(([\d\.]+)%\)", chunk)
-                if matches:
-                    used, total, percent = matches[-1]
-                else:
-                    # Если не нашли классический Context, ищем Tokens
-                    tokens_match = re.search(r"Tokens:\s*([\d\.]+[km]?)\s*in", chunk)
-                    context_match = re.search(r"Context:\s*([\d\.]+[km]?)\s*/\s*([\d\.]+[km]?)", chunk)
-                    if context_match:
-                        used = context_match.group(1)
-                        total = context_match.group(2)
-                        # Пытаемся рассчитать процент вручную
-                        def parse_v(v):
-                             v = v.lower()
-                             if 'k' in v: return float(v.replace('k',''))*1000
-                             if 'm' in v: return float(v.replace('m',''))*1000000
-                             return float(v)
-                        u_val, t_val = parse_v(used), parse_v(total)
-                        return {"used": int(u_val), "total": int(t_val), "percent": int((u_val/t_val)*100)}
-                    
-                    return {"used": 232000, "total": 1000000, "percent": 23} # Last resort base on what you see
-
-    except Exception as e:
-        print(f"AI Context live parse error: {e}")
+    live_data = get_latest_context()
+    if live_data:
+        return live_data
     
     # Fallback на сохраненный JSON, если парсинг не удался
     try:
@@ -74,7 +43,7 @@ def get_ai_context():
             with open(AI_CONTEXT_FILE, 'r') as f:
                 return json.load(f)
     except: pass
-    return {"used": 0, "total": 1000000, "percent": 0}
+    return {"used": 0, "total": 1000000, "percent": 0, "model": "unknown"}
 
 def get_agents_info():
     agents = []

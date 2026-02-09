@@ -1,17 +1,22 @@
+import os
+import psutil
+import time
+import subprocess
+import json
+
+# Manual .env parse to ensure it's loaded BEFORE anything else
+ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(ENV_PATH):
+    with open(ENV_PATH) as f:
+        for line in f:
+            if '=' in line and not line.startswith('#'):
+                k, v = line.strip().split('=', 1)
+                os.environ[k] = v
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import os
-import psutil
-
-# Простой парсер .env без сторонних библиотек
-if os.path.exists('.env'):
-    with open('.env') as f:
-        for line in f:
-            if '=' in line and not line.startswith('#'):
-                key, value = line.strip().split('=', 1)
-                os.environ[key] = value
 
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
@@ -23,9 +28,9 @@ from api.cron import get_cron_jobs
 
 app = FastAPI()
 
-# Монтируем статику (JS, CSS)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-app.mount("/static", StaticFiles(directory=os.path.join(current_dir, "static")), name="static")
+# Пути
+DASHBOARD_ROOT = os.path.dirname(os.path.abspath(__file__))
+app.mount("/static", StaticFiles(directory=os.path.join(DASHBOARD_ROOT, "static")), name="static")
 
 class AuthRequest(BaseModel):
     token: str
@@ -46,7 +51,6 @@ async def auth(data: AuthRequest):
 @app.get("/api/status")
 async def get_status(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)
-    git_info = get_git_info()
     return {
         "cpu": psutil.cpu_percent(),
         "ram": psutil.virtual_memory().percent,
@@ -55,11 +59,35 @@ async def get_status(token: str):
         "agents": get_agents_info(),
         "heartbeat_last": get_last_hb(),
         "heartbeat_raw": get_heartbeat_raw(),
-        "git": git_info,
-        "ai": get_ai_context(),
+        "git": get_git_info(),
         "files": get_workspace_tree(),
         "cron": get_cron_jobs()
     }
+
+@app.get("/api/ai_status_live")
+async def get_ai_status_live(token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    data = get_ai_context()
+    if data:
+        data["timestamp"] = int(time.time())
+        try:
+            cache_path = os.path.join(DASHBOARD_ROOT, 'scripts/ai_cache.json')
+            with open(cache_path, 'w') as f:
+                json.dump(data, f)
+        except: pass
+        return data
+    raise HTTPException(status_code=500, detail="Parser failed")
+
+@app.get("/api/ai_status_cached")
+async def get_ai_status_cached(token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    cache_path = os.path.join(DASHBOARD_ROOT, 'scripts/ai_cache.json')
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r') as f:
+                return json.load(f)
+        except: pass
+    return {"used": 0, "total": 1048576, "percent": 0, "model": "unknown", "timestamp": 0}
 
 @app.post("/api/heartbeat/update")
 async def update_heartbeat(data: HeartbeatUpdate):
@@ -82,8 +110,7 @@ async def translate(data: TranslateRequest):
 @app.get("/git", response_class=HTMLResponse)
 @app.get("/explorer", response_class=HTMLResponse)
 async def index(request: Request):
-    # Отдаем главный HTML из файла для всех основных маршрутов
-    return FileResponse(os.path.join(current_dir, "static/index.html"))
+    return FileResponse(os.path.join(DASHBOARD_ROOT, "static/index.html"))
 
 if __name__ == "__main__":
     import uvicorn

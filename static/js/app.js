@@ -29,39 +29,40 @@ function navigateTo(path) {
 
 function handleRouting() {
     const path = window.location.pathname;
-    const mainContent = document.getElementById('main-dashboard-content');
-    const agentsContent = document.getElementById('agents-view-content');
-    const gitContent = document.getElementById('git-view-content');
-    const explorerContent = document.getElementById('explorer-view-content');
+    const components = {
+        '/': 'main-dashboard-content',
+        '/explorer': 'explorer-view-content',
+        '/agents': 'agents-view-content',
+        '/git': 'git-view-content'
+    };
+
+    const tabs = {
+        '/': 'tab-main',
+        '/explorer': 'tab-explorer',
+        '/agents': 'tab-agents',
+        '/git': 'tab-git'
+    };
+
+    // Hide all
+    Object.values(components).forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    });
+
+    // Reset tabs
+    Object.values(tabs).forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all";
+    });
+
+    // Show active
+    const activeComp = components[path] || components['/'];
+    const activeTab = tabs[path] || tabs['/'];
     
-    const tabMain = document.getElementById('tab-main');
-    const tabAgents = document.getElementById('tab-agents');
-    const tabGit = document.getElementById('tab-git');
-    const tabExplorer = document.getElementById('tab-explorer');
+    if(document.getElementById(activeComp)) document.getElementById(activeComp).classList.remove('hidden');
+    if(document.getElementById(activeTab)) document.getElementById(activeTab).className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
 
-    // Reset visibility
-    [mainContent, agentsContent, gitContent, explorerContent].forEach(c => {
-        if(c) c.classList.add('hidden');
-    });
-
-    [tabMain, tabAgents, tabGit, tabExplorer].forEach(t => {
-        if(t) t.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-200 transition-all";
-    });
-
-    if (path === '/agents') {
-        if(agentsContent) agentsContent.classList.remove('hidden');
-        if(tabAgents) tabAgents.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
-    } else if (path === '/git') {
-        if(gitContent) gitContent.classList.remove('hidden');
-        if(tabGit) tabGit.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
-        updateGitPage();
-    } else if (path === '/explorer') {
-        if(explorerContent) explorerContent.classList.remove('hidden');
-        if(tabExplorer) tabExplorer.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
-    } else {
-        if(mainContent) mainContent.classList.remove('hidden');
-        if(tabMain) tabMain.className = "text-[14px] font-bold uppercase tracking-[0.2em] text-emerald-400 border-b-2 border-emerald-500 pb-1 transition-all";
-    }
+    if (path === '/git') updateGitPage();
 }
 
 window.onpopstate = () => handleRouting();
@@ -87,64 +88,84 @@ async function updateStats() {
     const data = await api('/api/status');
     if (!data) return;
     
-    // Header Stats
-    document.getElementById('stat-cpu').innerText = Math.round(data.cpu) + '%';
-    document.getElementById('stat-ram').innerText = Math.round(data.ram) + '%';
-    document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
-    document.getElementById('stat-uptime').innerText = data.uptime;
+    // Header Stats (Fast)
+    if(document.getElementById('stat-cpu')) document.getElementById('stat-cpu').innerText = Math.round(data.cpu) + '%';
+    if(document.getElementById('stat-ram')) document.getElementById('stat-ram').innerText = Math.round(data.ram) + '%';
+    if(document.getElementById('stat-disk')) document.getElementById('stat-disk').innerText = Math.round(data.disk) + '%';
+    if(document.getElementById('stat-uptime')) document.getElementById('stat-uptime').innerText = data.uptime;
     
-    if (data.ai) {
-        const fullStatus = document.getElementById('ai-full-status');
-        if (fullStatus) {
-            const usedK = (data.ai.used / 1000).toFixed(1);
-            fullStatus.innerText = `${usedK}k/1m(${data.ai.percent}%)`;
-        }
-    }
-
     const hbS = Math.floor(Date.now()/1000) - data.heartbeat_last;
-    document.getElementById('hb-last-seen').innerText = hbS < 60 ? 'Now' : Math.floor(hbS/60) + 'm ago';
+    if(document.getElementById('hb-last-seen')) document.getElementById('hb-last-seen').innerText = hbS < 60 ? 'Now' : Math.floor(hbS/60) + 'm ago';
     
-    if (data.files) document.getElementById('files-tree').innerHTML = renderTree(data.files);
+    if (data.files && document.getElementById('files-tree')) document.getElementById('files-tree').innerHTML = renderTree(data.files);
     
     const agentsList = document.getElementById('agents-list');
-    document.getElementById('stat-agents-count').innerText = data.agents.length;
-    agentsList.innerHTML = '';
-    data.agents.forEach(a => {
-        const row = document.createElement('div');
-        row.className = 'row-item py-4 flex justify-between items-center text-slate-300';
-        row.innerHTML = `<span class="text-[14px] font-bold">${a.name}</span><span class="text-[11px] text-slate-600 font-mono italic">PID:${a.pid}</span>`;
-        agentsList.appendChild(row);
-    });
+    if(agentsList) {
+        document.getElementById('stat-agents-count').innerText = data.agents.length;
+        agentsList.innerHTML = '';
+        data.agents.forEach(a => {
+            const row = document.createElement('div');
+            row.className = 'row-item py-4 flex justify-between items-center text-slate-300';
+            row.innerHTML = `<span class="text-[14px] font-bold">${a.name}</span><span class="text-[11px] text-slate-600 font-mono italic">PID:${a.pid}</span>`;
+            agentsList.appendChild(row);
+        });
+    }
 
     const cronList = document.getElementById('cron-list');
-    const cronCount = document.getElementById('cron-count');
-    if (data.cron) {
-        cronCount.innerText = data.cron.length;
-        if (data.cron.length > 0) {
-            cronList.innerHTML = '';
-            data.cron.forEach(job => {
-                const row = document.createElement('div');
-                row.className = 'row-item py-4 flex flex-col text-left gap-2';
-                row.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="text-[14px] text-slate-200 font-bold">${job.name || 'Unnamed Task'}</span>
-                        <span class="text-[11px] text-emerald-500/60 font-mono uppercase">${job.schedule || 'at once'}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[12px] text-slate-500">
-                        <span class="truncate pr-4">${job.payload}</span>
-                        <span class="font-bold text-slate-800">${job.id.slice(0,8)}</span>
-                    </div>`;
-                cronList.appendChild(row);
-            });
-        }
+    if(cronList && data.cron) {
+        document.getElementById('cron-count').innerText = data.cron.length;
+        cronList.innerHTML = '';
+        data.cron.forEach(job => {
+            const row = document.createElement('div');
+            row.className = 'row-item py-4 flex flex-col text-left gap-2';
+            row.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="text-[14px] text-slate-200 font-bold">${job.name || 'Unnamed Task'}</span>
+                    <span class="text-[11px] text-emerald-500/60 font-mono uppercase">${job.schedule || 'at once'}</span>
+                </div>
+                <div class="flex justify-between items-center text-[12px] text-slate-500">
+                    <span class="truncate pr-4">${job.payload}</span>
+                    <span class="font-bold text-slate-800">${job.id.slice(0,8)}</span>
+                </div>`;
+            cronList.appendChild(row);
+        });
     }
 
     if (document.activeElement !== document.getElementById('heartbeat-editor')) {
-        document.getElementById('heartbeat-editor').value = data.heartbeat_raw;
+        const hbEditor = document.getElementById('heartbeat-editor');
+        if(hbEditor) hbEditor.value = data.heartbeat_raw;
     }
     
     if (isManual || (autoRefreshEnabled && (Date.now() - lastUpdate >= UPDATE_MS))) {
         lastUpdate = Date.now();
+        updateAiStatus(false); // Background update
+    }
+}
+
+async function updateAiStatus(isLive) {
+    const statusEl = document.getElementById('ai-full-status');
+    const btn = document.getElementById('ai-status-refresh');
+    
+    if(isLive) { 
+        statusEl.classList.add('animate-pulse');
+        btn.innerText = '⌛';
+    }
+
+    // Attempt cache first on initial load, then live
+    const endpoint = isLive ? '/api/ai_status_live' : '/api/ai_status_cached';
+    const data = await api(endpoint);
+
+    if (data && !data.error) {
+        const usedK = (data.used / 1000).toFixed(1);
+        const modelStr = data.model ? ` [${data.model}]` : '';
+        const timeStr = data.timestamp ? ` (as of ${new Date(data.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})` : '';
+        statusEl.innerText = `${usedK}k/1m(${data.percent}%)${modelStr}`;
+        statusEl.title = "Last update: " + timeStr;
+    }
+
+    if(isLive) {
+        statusEl.classList.remove('animate-pulse');
+        btn.innerText = '🩺';
     }
 }
 
@@ -183,11 +204,14 @@ function toggleAllDirs(exp) {
 }
 
 async function openFile(path, page = 1) {
-    document.getElementById('main-dashboard-content').classList.add('hidden');
-    document.getElementById('agents-view-content').classList.add('hidden');
-    document.getElementById('git-view-content').classList.add('hidden');
-    document.getElementById('explorer-view-content').classList.add('hidden');
-    document.getElementById('file-viewer-content').classList.remove('hidden');
+    const mainContent = document.getElementById('main-dashboard-content');
+    const agentsContent = document.getElementById('agents-view-content');
+    const gitContent = document.getElementById('git-view-content');
+    const explorerContent = document.getElementById('explorer-view-content');
+    const fileViewer = document.getElementById('file-viewer-content');
+
+    [mainContent, agentsContent, gitContent, explorerContent].forEach(c => { if(c) c.classList.add('hidden'); });
+    fileViewer.classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     
     const codeEl = document.getElementById('viewer-text');
@@ -209,6 +233,11 @@ async function openFile(path, page = 1) {
     if (ext === 'md' || ext === 'txt') {
         translateBtn.classList.remove('hidden');
     }
+}
+
+function closeFileViewer() {
+    document.getElementById('file-viewer-content').classList.add('hidden');
+    handleRouting();
 }
 
 async function toggleTranslation() {
@@ -235,11 +264,6 @@ async function toggleTranslation() {
         btn.innerText = 'Original';
         isTranslated = true;
     }
-}
-
-function closeFileViewer() {
-    document.getElementById('file-viewer-content').classList.add('hidden');
-    handleRouting();
 }
 
 async function saveHeartbeat() {
@@ -288,7 +312,6 @@ window.onload = async () => {
     const magicKey = urlParams.get('key');
     if (magicKey) {
         localStorage.setItem(authKey, magicKey);
-        console.log("Letto Explorer: Magic Key applied from URL");
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -300,6 +323,7 @@ window.onload = async () => {
             document.getElementById('dashboard-view').classList.remove('hidden');
             handleRouting();
             updateStats(true); 
+            updateAiStatus(false); // Background cached update
             setInterval(updateTimer, 41);
             return;
         }
