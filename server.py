@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from api.auth import verify_token
 from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
-from api.files import get_workspace_tree, read_file_content
+from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
 from api.cron import get_cron_jobs
 
@@ -61,6 +61,7 @@ async def get_status(token: str):
         "heartbeat_raw": get_heartbeat_raw(),
         "git": get_git_info(),
         "files": get_workspace_tree(),
+        "system_configs": get_system_config_files(),
         "cron": get_cron_jobs()
     }
 

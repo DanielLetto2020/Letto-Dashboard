@@ -96,17 +96,26 @@
             </div>
 
             <!-- Workspace Explorer Section -->
-            <div id="explorer-view-content" class="hidden flex-1 flex flex-col">
+            <div id="explorer-view-content" class="hidden flex-1 flex flex-col pt-2 pb-10">
                 <div class="stat-card rounded-3xl mb-4 overflow-hidden flex-1 flex flex-col">
                     <div class="bg-white/5 px-6 py-4 flex justify-between items-center border-b border-white/5">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em]">Workspace Explorer</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Project Workspace</span>
                         <div class="flex gap-4">
                             <button onclick="toggleAllDirs(true)" class="text-[10px] text-emerald-500/60 font-bold uppercase">Expand</button>
                             <button onclick="toggleAllDirs(false)" class="text-[10px] text-slate-600 font-bold uppercase">Collapse</button>
                         </div>
                     </div>
-                    <div id="files-tree" class="flex-1 px-6 py-4 text-left overflow-y-auto no-scrollbar text-[14px] font-mono leading-relaxed min-h-[30rem]">
-                        <!-- Динамическое дерево файлов -->
+                    <div id="files-tree" class="flex-1 px-6 py-4 text-left overflow-y-auto no-scrollbar text-[14px] font-mono leading-relaxed min-h-[16rem]">
+                        <!-- Динамическое дерево файлов проекта -->
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-3xl mb-4 overflow-hidden flex flex-col bg-slate-900/50 border-emerald-500/10">
+                    <div class="bg-emerald-500/5 px-6 py-4 flex justify-between items-center border-b border-emerald-500/10">
+                        <span class="text-[10px] text-emerald-500/60 font-bold uppercase tracking-[0.2em]">OpenClaw System Configs</span>
+                    </div>
+                    <div id="system-configs-list" class="px-6 py-4 text-left overflow-y-auto no-scrollbar text-[14px] font-mono leading-relaxed">
+                        <!-- Плоский список системных конфигов -->
                     </div>
                 </div>
             </div>
