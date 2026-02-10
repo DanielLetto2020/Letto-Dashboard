@@ -65,10 +65,34 @@ def sync_to_dev():
         # 5. PUSH DEV
         subprocess.run(["git", "push", "origin", "dev"], cwd=DASHBOARD_ROOT, check=True, capture_output=True)
 
+        # 6. GITHUB PR: Создаем Pull Request (dev -> master)
+        pr_message = "All branches synced and pushed to origin/dev."
+        try:
+            remote_url = subprocess.check_output(["git", "remote", "get-url", "origin"], text=True, cwd=DASHBOARD_ROOT).strip()
+            if "github_pat_" in remote_url:
+                token = remote_url.split('@')[0].split(':')[-1]
+                repo_path = remote_url.split('github.com/')[-1].replace('.git', '')
+                
+                api_url = f"https://api.github.com/repos/{repo_path}/pulls"
+                headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+                payload = {
+                    "title": f"Release: {current_branch} merge",
+                    "head": "dev",
+                    "base": "master",
+                    "body": f"Automatically merged {current_branch} into dev. Syncing with master."
+                }
+                response = requests.post(api_url, headers=headers, json=payload)
+                if response.status_code == 201:
+                    pr_message = f"Pushed & PR created: {response.json().get('html_url')}"
+                elif response.status_code == 422:
+                    pr_message = "Pushed. PR already exists."
+                else: pr_message = f"Pushed, but PR error: {response.status_code}"
+        except: pass
+
         # Назад к задаче
         subprocess.run(["git", "checkout", current_branch], cwd=DASHBOARD_ROOT, capture_output=True)
         
-        return {"success": True, "message": "All branches synced and pushed to origin/dev."}
+        return {"success": True, "message": pr_message}
 
     except Exception as e:
         return {"success": False, "message": f"Sync failed: {str(e)}"}
