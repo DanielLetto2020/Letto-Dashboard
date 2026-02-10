@@ -1,0 +1,51 @@
+INFO:     Started server process [29112]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:3000 (Press CTRL+C to quit)
+INFO:     77.105.140.132:0 - "GET /git HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/css/style.css HTTP/1.1" 304 Not Modified
+INFO:     77.105.140.132:0 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "POST /api/auth HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /git HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/css/style.css HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "POST /api/auth HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /git HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/css/style.css HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "POST /api/auth HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /git HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/css/style.css HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "POST /api/auth HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/projects?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /git HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/css/style.css HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "POST /api/auth HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/status?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
+INFO:     77.105.140.132:0 - "GET /api/ai_status_cached?token=letto_super_access_2026_pulse HTTP/1.1" 200 OK
