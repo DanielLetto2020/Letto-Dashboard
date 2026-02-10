@@ -33,6 +33,34 @@ def get_git_info():
     except:
         return {"branch": "unknown", "commits": []}
 
+def sync_to_dev():
+    """
+    Автоматизация: переключение на dev, merge текущей ветки, push origin dev.
+    """
+    workspace_root = "/home/max/.openclaw/workspace"
+    try:
+        # Получаем текущую ветку
+        current_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True, cwd=workspace_root).strip()
+        
+        if current_branch == 'dev':
+            subprocess.check_call(["git", "push", "origin", "dev"], cwd=workspace_root)
+            return {"success": True, "message": "Already on dev. Pushed successfully."}
+
+        # 1. Переключаемся на dev
+        subprocess.check_call(["git", "checkout", "dev"], cwd=workspace_root)
+        # 2. Вливаем рабочую ветку
+        subprocess.check_call(["git", "merge", current_branch], cwd=workspace_root)
+        # 3. Пушим
+        subprocess.check_call(["git", "push", "origin", "dev"], cwd=workspace_root)
+        # 4. Возвращаемся назад
+        subprocess.check_call(["git", "checkout", current_branch], cwd=workspace_root)
+        
+        return {"success": True, "message": f"Merged {current_branch} into dev and pushed."}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "message": f"Git error: {e.output if hasattr(e, 'output') else str(e)}"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
 def get_agents_info():
     agents = []
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):

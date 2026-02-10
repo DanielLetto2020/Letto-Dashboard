@@ -196,6 +196,35 @@ async function updateGitPage() {
     });
 }
 
+async function syncGitDev() {
+    const btn = document.getElementById('git-sync-btn');
+    const originalText = btn.innerText;
+    btn.innerText = 'SYNCING...';
+    btn.disabled = true;
+
+    const res = await api('/api/system/git-sync', 'POST', {});
+    
+    if (res && res.success) {
+        btn.innerText = 'SUCCESS';
+        btn.classList.add('bg-emerald-500');
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            btn.classList.remove('bg-emerald-500');
+            updateGitPage();
+        }, 3000);
+    } else {
+        btn.innerText = 'ERROR';
+        btn.classList.add('bg-red-500');
+        alert('Sync failed: ' + (res ? res.detail || res.message : 'Unknown error'));
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            btn.classList.remove('bg-red-500');
+        }, 3000);
+    }
+}
+
 async function updateStats() {
     const isManual = arguments[0] === true;
     if (!autoRefreshEnabled && !isManual) return;
