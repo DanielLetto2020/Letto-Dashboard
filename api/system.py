@@ -49,11 +49,19 @@ def sync_to_dev():
         current_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], 
                                                text=True, cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT).strip()
         
+        # 2. АВТО-КОММИТ: Забираем все изменения перед синхронизацией
+        # Проверяем, есть ли что коммитить
+        status = subprocess.check_output(["git", "status", "--porcelain"], cwd=DASHBOARD_ROOT, text=True).strip()
+        if status:
+            subprocess.check_output(["git", "add", "."], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+            subprocess.check_output(["git", "commit", "-m", f"auto: task completed on {current_branch}"], 
+                                   cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+
         if current_branch == 'dev':
             subprocess.check_output(["git", "push", "origin", "dev"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
-            return {"success": True, "message": "Already on dev. Pushed successfully."}
+            return {"success": True, "message": "Changes committed and pushed to dev."}
 
-        # 2. Переключаемся на dev (сначала fetch для актуальности)
+        # 3. Переключаемся на dev (сначала fetch для актуальности)
         subprocess.check_output(["git", "fetch", "origin"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
         subprocess.check_output(["git", "checkout", "dev"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
         
