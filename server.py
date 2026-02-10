@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
-from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context, create_backup_zip
+from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context, create_backup_zip, sync_to_dev
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
@@ -58,6 +58,9 @@ class HeartbeatUpdate(BaseModel):
 class TranslateRequest(BaseModel):
     token: str
     text: str
+
+class GitSyncRequest(BaseModel):
+    token: str
 
 @app.post("/api/auth")
 async def auth(data: AuthRequest):
@@ -175,6 +178,14 @@ async def get_file(path: str, token: str, page: int = 1):
 async def translate(data: TranslateRequest):
     if not verify_token(data.token): raise HTTPException(status_code=401)
     return {"translated": translate_text(data.text)}
+
+@app.post("/api/system/git-sync")
+async def git_sync(data: GitSyncRequest):
+    if not verify_token(data.token): raise HTTPException(status_code=401)
+    result = sync_to_dev()
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result["message"])
+    return result
 
 # SPA Routing: Fallback for all other routes to index.html
 @app.get("/{path:path}")

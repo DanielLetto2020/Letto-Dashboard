@@ -6,6 +6,9 @@ import json
 import zipfile
 import io
 
+# Корень проекта для гит-команд
+DASHBOARD_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def get_server_uptime():
     uptime_seconds = time.time() - psutil.boot_time()
     hours = int(uptime_seconds // 3600)
@@ -22,8 +25,8 @@ def get_last_hb():
 
 def get_git_info():
     try:
-        branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True).strip()
-        commits_raw = subprocess.check_output(["git", "log", "-n", "5", "--pretty=format:%s|%cr"], text=True).strip()
+        branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True, cwd=DASHBOARD_ROOT).strip()
+        commits_raw = subprocess.check_output(["git", "log", "-n", "5", "--pretty=format:%s|%cr"], text=True, cwd=DASHBOARD_ROOT).strip()
         commits = []
         for line in commits_raw.split('\n'):
             if '|' in line:
@@ -32,6 +35,51 @@ def get_git_info():
         return {"branch": branch, "commits": commits}
     except:
         return {"branch": "unknown", "commits": []}
+
+def sync_to_dev():
+    """
+    Автоматизация: переключение на dev, merge текущей ветки, push origin dev.
+    """
+    try:
+        # 0. Убеждаемся, что мы в правильной папке
+        if not os.path.exists(os.path.join(DASHBOARD_ROOT, ".git")):
+            return {"success": False, "message": f"Git repo not found in {DASHBOARD_ROOT}"}
+
+        # 1. Получаем текущую ветку
+        current_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], 
+                                               text=True, cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT).strip()
+        
+        # 2. АВТО-КОММИТ: Забираем все изменения перед синхронизацией
+        # Проверяем, есть ли что коммитить
+        status = subprocess.check_output(["git", "status", "--porcelain"], cwd=DASHBOARD_ROOT, text=True).strip()
+        if status:
+            subprocess.check_output(["git", "add", "."], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+            subprocess.check_output(["git", "commit", "-m", f"auto: task completed on {current_branch}"], 
+                                   cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+
+        if current_branch == 'dev':
+            subprocess.check_output(["git", "push", "origin", "dev"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+            return {"success": True, "message": "Changes committed and pushed to dev."}
+
+        # 3. Переключаемся на dev (сначала fetch для актуальности)
+        subprocess.check_output(["git", "fetch", "origin"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+        subprocess.check_output(["git", "checkout", "dev"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+        
+        # 3. Вливаем рабочую ветку
+        subprocess.check_output(["git", "merge", current_branch], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+        
+        # 4. Пушим
+        subprocess.check_output(["git", "push", "origin", "dev"], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+        
+        # 5. Возвращаемся назад
+        subprocess.check_output(["git", "checkout", current_branch], cwd=DASHBOARD_ROOT, stderr=subprocess.STDOUT)
+        
+        return {"success": True, "message": f"Merged {current_branch} into dev and pushed successfully."}
+    except subprocess.CalledProcessError as e:
+        error_msg = e.output if hasattr(e, 'output') else str(e)
+        return {"success": False, "message": f"Git command failed: {error_msg}"}
+    except Exception as e:
+        return {"success": False, "message": f"Unexpected error: {str(e)}"}
 
 def get_agents_info():
     agents = []
@@ -47,11 +95,9 @@ def get_agents_info():
 
 def get_ai_context():
     try:
-        # Используем ПОЛНЫЙ путь к бинарнику, так как в системном сервисе PATH ограничен
         cli_path = "/home/max/.nvm/versions/node/v22.22.0/bin/openclaw"
         result = subprocess.run([cli_path, "sessions", "list"], capture_output=True, text=True, check=True)
         try:
-            # Пытаемся парсить JSON от CLI
             sessions = json.loads(result.stdout)
             main_session = next((s for s in sessions if "main" in s.get("key", "")), sessions[0])
             return {
@@ -72,8 +118,6 @@ def get_ai_context_legacy():
         if os.path.exists(path):
             with open(path, 'r') as f:
                 data = json.load(f)
-                # В sessions.json лежит массив или объект с сессиями.
-                # Если это массив, берем первый элемент (обычно main)
                 main = data[0] if isinstance(data, list) else data.get('agent:main:main', {})
                 tokens = main.get('totalTokens', 0)
                 limit = main.get('contextTokens', 1048576)
@@ -99,7 +143,6 @@ def create_backup_zip():
                 arcname = os.path.relpath(file_path, workspace_root)
                 zipf.write(file_path, arcname)
         
-        # Системные логи и конфиги
         sys_paths = ["/home/max/.openclaw/openclaw.json", "/home/max/.openclaw/agents/main/sessions/sessions.json"]
         for p in sys_paths:
             if os.path.exists(p):
