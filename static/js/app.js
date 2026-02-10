@@ -89,7 +89,20 @@ async function updateProjectsPage() {
     list.innerHTML = '';
     data.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'stat-card p-6 rounded-3xl flex flex-col gap-3 scale-in';
+        card.className = 'stat-card p-6 rounded-3xl flex flex-col gap-3 scale-in cursor-pointer';
+        
+        // Извлекаем короткое имя репозитория из URL если он есть
+        let originDisplay = 'Local';
+        const remoteUrl = p.remote_url; 
+        if (remoteUrl && remoteUrl !== 'No remote origin') {
+            try {
+                const parts = remoteUrl.replace('.git', '').split(/[:/]/);
+                originDisplay = parts[parts.length - 1];
+            } catch(e) {
+                originDisplay = 'Connected';
+            }
+        }
+
         card.innerHTML = `
             <div class="flex justify-between items-start">
                 <span class="text-xl font-bold text-white">${p.name}</span>
@@ -97,8 +110,9 @@ async function updateProjectsPage() {
                     ${p.has_git ? 'GIT ACTIVE' : 'NO GIT'}
                 </span>
             </div>
-            <div class="text-[11px] text-slate-500 uppercase tracking-widest">
-                Origin: <span class="${p.has_origin ? 'text-emerald-500' : 'text-slate-700'}">${p.has_origin ? 'Connected' : 'Local Only'}</span>
+            <div class="text-[11px] text-slate-500 uppercase tracking-widest flex flex-col gap-1">
+                <div>Origin: <span class="${(remoteUrl && remoteUrl !== 'No remote origin') ? 'text-emerald-500 font-bold' : 'text-slate-700'}">${originDisplay}</span></div>
+                ${(remoteUrl && remoteUrl !== 'No remote origin') ? `<div class="lowercase text-[9px] opacity-40 truncate font-mono">${remoteUrl}</div>` : ''}
             </div>
         `;
         card.onclick = () => navigateTo('/projects/' + p.name);
