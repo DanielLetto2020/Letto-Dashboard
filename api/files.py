@@ -21,13 +21,14 @@ def get_workspace_tree(path=None):
             full_path = os.path.join(path, item)
             is_dir = os.path.isdir(full_path)
             
+            size = 0
+            mtime = 0
             try:
                 stats = os.stat(full_path)
                 size = stats.st_size
                 mtime = stats.st_mtime
-            except:
-                size = 0
-                mtime = 0
+            except Exception:
+                pass
 
             node = {
                 "name": item,
