@@ -5,6 +5,7 @@ let autoRefreshEnabled = false;
 let originalContent = '';
 let translatedContent = '';
 let isTranslated = false;
+let editor = null;
 
 async function api(path, method = 'GET', body = null) {
     const token = localStorage.getItem(authKey);
@@ -393,19 +394,46 @@ async function openFile(path, page = 1) {
     if(fileViewer) fileViewer.classList.remove('hidden');
     document.getElementById('viewer-filename').innerText = path.split('/').pop();
     
-    document.getElementById('viewer-text').innerText = 'Loading...';
-    
     const translateBtn = document.getElementById('translate-btn');
     if(translateBtn) { translateBtn.classList.add('hidden'); isTranslated = false; }
 
+    // Initialize CodeMirror if not already
+    if (!editor) {
+        editor = CodeMirror(document.getElementById('editor-container'), {
+            theme: 'dracula',
+            lineNumbers: true,
+            readOnly: true,
+            lineWrapping: true,
+            viewportMargin: Infinity
+        });
+    }
+
+    editor.setValue('Loading...');
+    
     const data = await api(`/api/files/read?path=${encodeURIComponent(path)}&page=${page}`);
-    if (!data || data.error) { document.getElementById('viewer-text').innerText = data ? data.error : 'Error'; return; }
+    if (!data || data.error) { 
+        editor.setValue(data ? data.error : 'Error'); 
+        return; 
+    }
     
     originalContent = data.content;
     translatedContent = '';
-    document.getElementById('viewer-text').innerText = originalContent;
-
+    
+    // Set mode based on extension
     const ext = path.split('.').pop().toLowerCase();
+    let mode = 'text/plain';
+    if (ext === 'py') mode = 'python';
+    else if (ext === 'js') mode = 'javascript';
+    else if (ext === 'md') mode = 'markdown';
+    else if (ext === 'html') mode = 'htmlmixed';
+    else if (ext === 'css') mode = 'css';
+    
+    editor.setOption('mode', mode);
+    editor.setValue(originalContent);
+    
+    // Refresh to ensure correct rendering
+    setTimeout(() => editor.refresh(), 10);
+
     if ((ext === 'md' || ext === 'txt') && translateBtn) translateBtn.classList.remove('hidden');
 }
 
@@ -416,9 +444,8 @@ function closeFileViewer() {
 
 async function toggleTranslation() {
     const btn = document.getElementById('translate-btn');
-    const codeEl = document.getElementById('viewer-text');
     if (isTranslated) {
-        codeEl.innerText = originalContent;
+        editor.setValue(originalContent);
         btn.innerText = 'Translate';
         isTranslated = false;
     } else {
@@ -428,10 +455,11 @@ async function toggleTranslation() {
             if (res && res.translated) translatedContent = res.translated;
             else { btn.innerText = 'Error'; return; }
         }
-        codeEl.innerText = translatedContent;
+        editor.setValue(translatedContent);
         btn.innerText = 'Original';
         isTranslated = true;
     }
+    setTimeout(() => editor.refresh(), 10);
 }
 
 async function saveHeartbeat() {

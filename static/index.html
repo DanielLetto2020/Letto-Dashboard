@@ -6,6 +6,11 @@
     <title>Letto | Mobile Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="min-h-screen bg-slate-900 font-['JetBrains_Mono'] text-slate-300">
@@ -156,8 +161,8 @@
                     <button id="translate-btn" onclick="toggleTranslation()" class="hidden text-[10px] bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-xl font-bold uppercase tracking-widest border border-emerald-500/30 shadow-xl active:scale-95 transition-all">Translate</button>
                     <div id="viewer-filename" class="text-[12px] text-emerald-400 font-bold font-mono truncate max-w-[30%]">file.py</div>
                 </div>
-                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-auto min-h-0 no-scrollbar shadow-inner">
-                    <pre class="m-0 p-0 text-slate-300 text-[16px] font-mono whitespace-pre text-left" id="viewer-text"></pre>
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden min-h-0 shadow-inner flex flex-col">
+                    <div id="editor-container" class="flex-1 h-full"></div>
                 </div>
                 <div id="viewer-pagination" class="mt-4 flex justify-center items-center gap-4 hidden border-t border-white/5 pt-4">
                     <button id="page-prev" class="text-[10px] text-emerald-500 uppercase font-bold px-2 py-1">Prev</button>
@@ -167,6 +172,15 @@
             </div>
         </div>
     </div>
+
+    <!-- CodeMirror Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
 
     <script src="/static/js/app.js"></script>
 </body>
