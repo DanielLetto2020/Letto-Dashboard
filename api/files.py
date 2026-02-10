@@ -1,4 +1,5 @@
 import os
+import time
 
 # Путь к воркспейсу теперь на один уровень выше, так как дашборд переехал в projects/
 WORKSPACE_ROOT = "/home/max/.openclaw/workspace"
@@ -20,10 +21,13 @@ def get_workspace_tree(path=None):
             full_path = os.path.join(path, item)
             is_dir = os.path.isdir(full_path)
             
+            stats = os.stat(full_path)
             node = {
                 "name": item,
                 "is_dir": is_dir,
-                "path": os.path.relpath(full_path, WORKSPACE_ROOT)
+                "path": os.path.relpath(full_path, WORKSPACE_ROOT),
+                "size": stats.st_size if not is_dir else 0,
+                "mtime": stats.st_mtime
             }
             
             if is_dir:
@@ -53,10 +57,13 @@ def get_system_config_files():
     for f in files:
         full_path = os.path.join(base, f)
         if os.path.exists(full_path):
+            stats = os.stat(full_path)
             result.append({
                 "name": f,
                 "path": full_path,
-                "is_dir": False
+                "is_dir": False,
+                "size": stats.st_size,
+                "mtime": stats.st_mtime
             })
     return result
 

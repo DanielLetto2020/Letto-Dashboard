@@ -115,6 +115,25 @@ async def download_project(name: str, token: str):
         headers={"Content-Disposition": f"attachment; filename={name}.zip"}
     )
 
+@app.get("/api/files/download")
+async def download_single_file(path: str, token: str):
+    if not verify_token(token): raise HTTPException(status_code=401)
+    
+    # Пытаемся понять, это абсолютный путь (система) или относительный (воркспейс)
+    if path.startswith("/home/max/.openclaw"):
+        full_path = path
+    else:
+        workspace_root = "/home/max/.openclaw/workspace"
+        full_path = os.path.join(workspace_root, path)
+    
+    if not os.path.exists(full_path) or os.path.isdir(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    return FileResponse(
+        full_path,
+        filename=os.path.basename(full_path)
+    )
+
 @app.get("/api/ai_status_live")
 async def get_ai_status_live(token: str):
     if not verify_token(token): raise HTTPException(status_code=401)

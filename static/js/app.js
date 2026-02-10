@@ -313,6 +313,15 @@ async function downloadBackup() {
     setTimeout(() => { btn.innerHTML = '<span>📦</span> <span class="hidden sm:inline">Backup</span>'; }, 3000);
 }
 
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
 function renderTree(nodes, indent = 0, currentPath = '') {
     let html = '';
     if(!nodes) return html;
@@ -331,8 +340,20 @@ function renderTree(nodes, indent = 0, currentPath = '') {
             </div>`;
         } else {
             const safePath = btoa(nodePath);
-            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFileSafe('${safePath}')">
-                <span class="mr-2 ml-4">📄</span><span class="text-slate-300 text-[14px]">${node.name}</span>
+            const dateStr = node.mtime ? new Date(node.mtime * 1000).toLocaleDateString() : '';
+            const sizeStr = node.size ? formatBytes(node.size) : '0 B';
+            const downloadUrl = `/api/files/download?path=${encodeURIComponent(nodePath)}&token=${localStorage.getItem(authKey)}`;
+
+            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2 file-row" style="padding-left: ${pad}px">
+                <div class="flex items-center cursor-pointer flex-1" onclick="openFileSafe('${safePath}')">
+                    <span class="mr-2 ml-4">📄</span>
+                    <span class="text-slate-300 text-[14px] truncate">${node.name}</span>
+                </div>
+                <div class="file-meta">
+                    <span class="text-slate-500">${sizeStr}</span>
+                    <span class="text-slate-600">${dateStr}</span>
+                    <a href="${downloadUrl}" class="btn-download-small" title="Download file" onclick="event.stopPropagation()">📥</a>
+                </div>
             </div>`;
         }
     });
