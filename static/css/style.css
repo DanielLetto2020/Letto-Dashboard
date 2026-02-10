@@ -44,9 +44,34 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
 }
 
 /* Base text elements scale */
-.text-[8px] { font-size: 11px; }
-.text-[9px] { font-size: 13px; }
-.text-[10px] { font-size: 14px; }
+.text-\[8px\] { font-size: 11px; }
+.text-\[9px\] { font-size: 13px; }
+.text-\[10px\] { font-size: 14px; }
+
+/* File Tree Meta Styles */
+.file-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    opacity: 0.4;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.file-row:hover .file-meta {
+    opacity: 0.8;
+}
+.btn-download-small {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    transition: all 0.2s;
+}
+.btn-download-small:hover {
+    background: rgba(16, 185, 129, 0.3);
+    transform: scale(1.1);
+}
 
 /* Desktop Adjustment Override */
 @media (min-width: 768px) {
@@ -71,5 +96,9 @@ body { background-color: #0f172a; color: white; font-family: 'JetBrains Mono', m
         background: rgba(30, 41, 59, 0.6);
         padding-top: 12px;
         padding-bottom: 12px;
+    }
+
+    .file-meta {
+        display: none; /* Hide meta on very small screens to avoid overlap */
     }
 }

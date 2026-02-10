@@ -1,35 +1,48 @@
 import os
-import subprocess
+import datetime
 
 PROJECTS_ROOT = "/home/max/.openclaw/workspace/projects"
 
 def get_projects_list():
-    projects = []
     if not os.path.exists(PROJECTS_ROOT):
-        return projects
-
-    for item in os.listdir(PROJECTS_ROOT):
-        path = os.path.join(PROJECTS_ROOT, item)
-        if os.path.isdir(path):
-            has_git = os.path.exists(os.path.join(path, ".git"))
-            has_origin = False
-            
-            if has_git:
-                try:
-                    # Check if origin exists without printing errors to console
-                    subprocess.check_output(
-                        ["git", "remote", "get-url", "origin"],
-                        cwd=path,
-                        stderr=subprocess.DEVNULL
-                    )
-                    has_origin = True
-                except (subprocess.CalledProcessError, FileNotFoundError):
-                    has_origin = False
-            
-            projects.append({
-                "name": item,
-                "has_git": has_git,
-                "has_origin": has_origin
-            })
+        return []
     
-    return sorted(projects, key=lambda x: x['name'].lower())
+    projects = []
+    try:
+        items = sorted(os.listdir(PROJECTS_ROOT))
+        for item in items:
+            full_path = os.path.join(PROJECTS_ROOT, item)
+            if os.path.isdir(full_path):
+                # Базовая инфа о проекте
+                proj_files = []
+                try:
+                    for f in sorted(os.listdir(full_path)):
+                        if f.startswith('.') or f == "__pycache__": continue
+                        f_path = os.path.join(full_path, f)
+                        
+                        size = 0
+                        mtime = "Unknown"
+                        try:
+                            stats = os.stat(f_path)
+                            size = stats.st_size
+                            mtime = datetime.datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M')
+                        except: pass
+
+                        proj_files.append({
+                            "name": f,
+                            "is_dir": os.path.isdir(f_path),
+                            "path": f, # Относительно корня проекта
+                            "size": size,
+                            "mtime": mtime
+                        })
+                except: pass
+                
+                projects.append({
+                    "name": item,
+                    "path": full_path,
+                    "files": proj_files
+                })
+    except Exception as e:
+        print(f"Error listing projects: {e}")
+        
+    return projects

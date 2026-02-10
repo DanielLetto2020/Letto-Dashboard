@@ -313,12 +313,20 @@ async function downloadBackup() {
     setTimeout(() => { btn.innerHTML = '<span>📦</span> <span class="hidden sm:inline">Backup</span>'; }, 3000);
 }
 
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
 function renderTree(nodes, indent = 0, currentPath = '') {
     let html = '';
     if(!nodes) return html;
     nodes.forEach(node => {
         const pad = indent * 16;
-        // Fix: Ensure path is correctly determined for detail view
         const nodePath = node.path || (currentPath ? currentPath + '/' + node.name : node.name);
         
         if (node.is_dir) {
@@ -331,8 +339,24 @@ function renderTree(nodes, indent = 0, currentPath = '') {
             </div>`;
         } else {
             const safePath = btoa(nodePath);
-            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2" style="padding-left: ${pad}px" onclick="openFileSafe('${safePath}')">
-                <span class="mr-2 ml-4">📄</span><span class="text-slate-300 text-[14px]">${node.name}</span>
+            const dateStr = node.mtime ? new Date(node.mtime * 1000).toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'}) : '--';
+            const sizeStr = node.size !== undefined ? formatBytes(node.size) : '0 B';
+            const downloadUrl = `/api/files/download?path=${encodeURIComponent(nodePath)}&token=${localStorage.getItem(authKey)}`;
+
+            html += `<div class="py-2 flex items-center active:bg-white/5 rounded px-2 file-row group" style="padding-left: ${pad}px">
+                <div class="flex items-center cursor-pointer flex-1 min-w-0" onclick="openFileSafe('${safePath}')">
+                    <span class="mr-2 ml-4 shrink-0">📄</span>
+                    <span class="text-slate-300 text-[14px] truncate">${node.name}</span>
+                </div>
+                <div class="flex items-center gap-4 ml-4 shrink-0">
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-slate-500 font-mono">${sizeStr}</span>
+                        <span class="text-[9px] text-slate-600 font-mono">${dateStr}</span>
+                    </div>
+                    <a href="${downloadUrl}" download class="w-8 h-8 flex items-center justify-center bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-slate-900 transition-all" title="Download file" onclick="event.stopPropagation()">
+                        <span class="text-xs">📥</span>
+                    </a>
+                </div>
             </div>`;
         }
     });
