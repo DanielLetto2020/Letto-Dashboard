@@ -1,0 +1,61 @@
+def sync_to_dev():
+    """
+    CI/CD Конвейер: Commit -> Sync Master -> Merge to Dev -> Push -> Create PR
+    """
+    try:
+        if not os.path.exists(os.path.join(DASHBOARD_ROOT, ".git")):
+            return {"success": False, "message": "Git repo not found"}
+
+        # 1. Получаем токен из remote url
+        remote_url = subprocess.check_output(["git", "remote", "get-url", "origin"], 
+                                           text=True, cwd=DASHBOARD_ROOT).strip()
+        
+        token = None
+        if "github_pat_" in remote_url:
+            token = remote_url.split('@')[0].split(':')[-1]
+
+        # Текущая ветка
+        current_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], 
+                                               text=True, cwd=DASHBOARD_ROOT).strip()
+        
+        # 2. COMMIT: Сохраняем текущий прогресс
+        subprocess.run(["git", "add", "."], cwd=DASHBOARD_ROOT)
+        subprocess.run(["git", "commit", "-m", f"auto: progress on {current_branch}"], cwd=DASHBOARD_ROOT, capture_output=True)
+
+        # 3. MASTER SYNC
+        subprocess.run(["git", "checkout", "master"], cwd=DASHBOARD_ROOT, check=True, capture_output=True)
+        subprocess.run(["git", "pull", "origin", "master"], cwd=DASHBOARD_ROOT, capture_output=True)
+
+        # 4. DEV UPDATE & MERGE
+        subprocess.run(["git", "checkout", "dev"], cwd=DASHBOARD_ROOT, check=True, capture_output=True)
+        subprocess.run(["git", "pull", "origin", "dev"], cwd=DASHBOARD_ROOT, capture_output=True)
+        subprocess.run(["git", "merge", "master"], cwd=DASHBOARD_ROOT, capture_output=True)
+        subprocess.run(["git", "merge", current_branch], cwd=DASHBOARD_ROOT, capture_output=True)
+
+        # 5. PUSH DEV
+        subprocess.run(["git", "push", "origin", "dev"], cwd=DASHBOARD_ROOT, check=True, capture_output=True)
+
+        # 6. GITHUB PR
+        pr_message = "Push successful"
+        if token:
+            repo_path = remote_url.split('github.com/')[-1].replace('.git', '')
+            api_url = f"https://api.github.com/repos/{repo_path}/pulls"
+            headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+            payload = {
+                "title": f"Release: {current_branch} sync",
+                "head": "dev", "base": "master",
+                "body": f"Auto-sync {current_branch} -> dev -> master"
+            }
+            response = requests.post(api_url, headers=headers, json=payload)
+            if response.status_code == 201:
+                pr_message = f"PR created: {response.json().get('html_url')}"
+            else:
+                pr_message = f"Push OK, PR exists or error"
+
+        # Назад к задаче
+        subprocess.run(["git", "checkout", current_branch], cwd=DASHBOARD_ROOT, capture_output=True)
+        
+        return {"success": True, "message": f"Sync complete! {pr_message}"}
+
+    except Exception as e:
+        return {"success": False, "message": f"Sync failed: {str(e)}"}

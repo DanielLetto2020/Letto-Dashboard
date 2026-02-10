@@ -569,3 +569,29 @@ window.onload = async () => {
     document.getElementById('boot-loader').classList.add('hidden');
     document.getElementById('login-view').classList.remove('hidden');
 };
+
+async function syncGitDev() {
+    // Пробуем найти обе кнопки
+    const btns = [document.getElementById('git-sync-btn-header'), document.getElementById('git-sync-btn')];
+    btns.forEach(b => { if(b) { b.innerText = 'SYNCING...'; b.disabled = true; } });
+
+    try {
+        const res = await api('/api/system/git-sync', 'POST', {});
+        if(res && res.success) {
+            alert(res.message);
+            btns.forEach(b => { if(b) b.innerText = 'DONE'; });
+        } else {
+            alert("Error: " + (res ? res.message : 'Fail'));
+            btns.forEach(b => { if(b) b.innerText = 'ERROR'; });
+        }
+    } catch(e) {
+        btns.forEach(b => { if(b) b.innerText = 'FAIL'; });
+    }
+
+    setTimeout(() => {
+        if(btns[0]) btns[0].innerText = 'Sync to Dev';
+        if(btns[1]) btns[1].innerText = 'Sync to Dev';
+        btns.forEach(b => { if(b) b.disabled = false; });
+        updateStats(true);
+    }, 4000);
+}
