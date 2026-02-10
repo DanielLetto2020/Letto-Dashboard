@@ -1,5 +1,6 @@
 import os
 import datetime
+import subprocess
 
 PROJECTS_ROOT = "/home/max/.openclaw/workspace/projects"
 
@@ -13,6 +14,21 @@ def get_projects_list():
         for item in items:
             full_path = os.path.join(PROJECTS_ROOT, item)
             if os.path.isdir(full_path):
+                # Проверка наличия локального Git
+                has_git = os.path.exists(os.path.join(full_path, ".git"))
+                origin_url = None
+                
+                if has_git:
+                    try:
+                        # Пытаемся получить URL удаленного репозитория
+                        origin_url = subprocess.check_output(
+                            ["git", "remote", "get-url", "origin"],
+                            cwd=full_path,
+                            stderr=subprocess.STDOUT
+                        ).decode('utf-8').strip()
+                    except:
+                        origin_url = None
+
                 # Базовая инфа о проекте
                 proj_files = []
                 try:
@@ -40,6 +56,8 @@ def get_projects_list():
                 projects.append({
                     "name": item,
                     "path": full_path,
+                    "has_git": has_git,
+                    "origin": origin_url,
                     "files": proj_files
                 })
     except Exception as e:
