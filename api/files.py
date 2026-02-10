@@ -40,7 +40,7 @@ def get_workspace_tree(path=None):
             
             if is_dir:
                 try:
-                    # Ограничиваем рекурсию для стабильности
+                    # Рекурсивно получаем детей
                     node["children"] = get_workspace_tree(full_path)
                 except:
                     node["children"] = []

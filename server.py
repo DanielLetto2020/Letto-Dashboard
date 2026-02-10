@@ -132,7 +132,7 @@ async def download_single_file(path: str, token: str):
     return FileResponse(
         full_path,
         filename=os.path.basename(full_path),
-        headers={"Content-Disposition": f"attachment; filename={os.path.basename(full_path)}"}
+        media_type='application/octet-stream'
     )
 
 @app.get("/api/ai_status_live")
