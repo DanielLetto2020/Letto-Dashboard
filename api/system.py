@@ -32,8 +32,22 @@ def get_git_info():
             if '|' in line:
                 msg, date = line.split('|')
                 commits.append({"msg": msg, "date": date})
-        return {"branch": branch, "commits": commits}
-    except: return {"branch": "unknown", "commits": []}
+        
+        # Получаем список всех веток
+        branches_raw = subprocess.check_output(["git", "branch", "--format=%(refname:short)"], text=True, cwd=DASHBOARD_ROOT).strip()
+        branches = branches_raw.split('\n')
+        
+        return {"branch": branch, "commits": commits, "branches": branches}
+    except: return {"branch": "unknown", "commits": [], "branches": []}
+
+def git_checkout_branch(branch_name: str):
+    try:
+        # Проверяем, нет ли незакоммиченных изменений (опционально, но лучше сделать)
+        # Для простоты просто делаем checkout
+        subprocess.run(["git", "checkout", branch_name], cwd=DASHBOARD_ROOT, check=True, capture_output=True)
+        return {"success": True, "message": f"Switched to branch {branch_name}"}
+    except Exception as e:
+        return {"success": False, "message": f"Checkout failed: {str(e)}"}
 
 def sync_to_dev():
     """

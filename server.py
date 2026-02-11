@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 # Импортируем нашу новую модульную логику
 from api.auth import verify_token
-from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context, create_backup_zip, sync_to_dev
+from api.system import get_server_uptime, get_last_hb, get_git_info, get_agents_info, get_ai_context, create_backup_zip, sync_to_dev, git_checkout_branch
 from api.heartbeat import get_heartbeat_raw, update_heartbeat_content
 from api.files import get_workspace_tree, get_system_config_files, read_file_content
 from api.translate import translate_text
@@ -61,6 +61,10 @@ class TranslateRequest(BaseModel):
 
 class GitSyncRequest(BaseModel):
     token: str
+
+class GitCheckoutRequest(BaseModel):
+    token: str
+    branch: str
 
 @app.post("/api/auth")
 async def auth(data: AuthRequest):
@@ -183,6 +187,14 @@ async def translate(data: TranslateRequest):
 async def git_sync(data: GitSyncRequest):
     if not verify_token(data.token): raise HTTPException(status_code=401)
     result = sync_to_dev()
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result["message"])
+    return result
+
+@app.post("/api/system/git-checkout")
+async def git_checkout(data: GitCheckoutRequest):
+    if not verify_token(data.token): raise HTTPException(status_code=401)
+    result = git_checkout_branch(data.branch)
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result["message"])
     return result

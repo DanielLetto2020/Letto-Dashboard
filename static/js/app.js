@@ -199,15 +199,62 @@ window.onpopstate = () => handleRouting();
 async function updateGitPage() {
     const data = await api('/api/status');
     if (!data || !data.git) return;
-    document.getElementById('git-page-branch').innerText = data.git.branch;
+    
+    // Обновляем текущую ветку
+    const branchDisplay = document.getElementById('git-page-branch');
+    if (branchDisplay) branchDisplay.innerText = data.git.branch;
+    
+    // Обновляем селект выбора веток
+    const branchSelector = document.getElementById('git-branch-selector');
+    if (branchSelector && data.git.branches) {
+        branchSelector.innerHTML = '';
+        data.git.branches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.innerText = b;
+            if (b === data.git.branch) opt.selected = true;
+            branchSelector.appendChild(opt);
+        });
+    }
+
     const list = document.getElementById('git-full-list');
-    list.innerHTML = '';
-    data.git.commits.forEach(c => {
-        const row = document.createElement('div');
-        row.className = 'py-4 border-b border-white/5 flex flex-col gap-2 scale-in';
-        row.innerHTML = `<span class="text-[15px] text-slate-100 font-bold leading-tight">${c.msg}</span><span class="text-[11px] text-emerald-500/60 font-mono uppercase tracking-widest">${c.date}</span>`;
-        list.appendChild(row);
-    });
+    if (list) {
+        list.innerHTML = '';
+        data.git.commits.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'py-4 border-b border-white/5 flex flex-col gap-2 scale-in';
+            row.innerHTML = `<span class="text-[15px] text-slate-100 font-bold leading-tight">${c.msg}</span><span class="text-[11px] text-emerald-500/60 font-mono uppercase tracking-widest">${c.date}</span>`;
+            list.appendChild(row);
+        });
+    }
+}
+
+async function switchGitBranch() {
+    const selector = document.getElementById('git-branch-selector');
+    const branch = selector.value;
+    const btn = document.getElementById('git-switch-btn');
+    
+    const originalText = btn.innerText;
+    btn.innerText = 'WAIT...';
+    btn.disabled = true;
+
+    const res = await api('/api/system/git-checkout', 'POST', { branch });
+    
+    if (res && res.success) {
+        btn.innerText = 'DONE';
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            updateGitPage();
+        }, 2000);
+    } else {
+        btn.innerText = 'ERR';
+        alert('Checkout failed: ' + (res ? res.message : 'Unknown error'));
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }, 2000);
+    }
 }
 
 async function syncGitDev() {
