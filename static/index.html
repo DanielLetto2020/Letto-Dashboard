@@ -154,8 +154,22 @@
                             Sync to Dev
                         </button>
                     </div>
-                    <div id="git-full-list" class="flex-1 px-6 py-4 overflow-y-auto no-scrollbar">
-                        <!-- Сюда будем грузить расширенный список коммитов -->
+                    <div class="flex-1 px-6 py-4 overflow-y-auto no-scrollbar">
+                        <div class="bg-slate-800/20 p-4 rounded-2xl border border-white/5 mb-6">
+                            <h3 class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-4">Branch Control</h3>
+                            <div class="flex gap-2">
+                                <select id="git-branch-selector" class="flex-1 bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl px-4 py-2 focus:outline-none focus:border-emerald-500">
+                                    <!-- Ветки подгрузятся динамически -->
+                                </select>
+                                <button id="git-switch-btn" onclick="switchGitBranch()" class="bg-slate-800 text-slate-300 border border-white/5 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 transition-all">
+                                    Switch
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 px-2">Commit History</h3>
+                        <div id="git-full-list">
+                            <!-- Сюда будем грузить расширенный список коммитов -->
+                        </div>
                     </div>
                 </div>
             </div>
